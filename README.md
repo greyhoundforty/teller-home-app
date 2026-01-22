@@ -1,71 +1,133 @@
 # Teller Home App
 
-A beautiful, full-featured financial management application that securely connects to your bank accounts via Teller Connect, providing real-time balance tracking, transaction history, bill payment scheduling, and weekly financial forecasts.
+A beautiful, full-featured financial management application that securely connects to your bank accounts via Teller, providing real-time balance tracking, transaction history, bill payment scheduling, and weekly financial forecasts.
 
-## 🚀 Quick Start
+## 🎯 What This App Does
+
+**Teller Home App** helps you manage your finances in one unified dashboard by connecting directly to your real bank accounts. Instead of logging into multiple banking portals, you get a single, beautiful interface showing:
+
+- **📊 Dashboard**: View all your account balances at a glance, with custom naming so you can distinguish between "My Chase" and "Wife's Chase"
+- **📅 Calendar**: Schedule and track bill payments month by month, with projected daily balances showing the impact of your payments
+- **🏦 Bank Integration**: Securely connect via Teller Connect - no passwords shared, just read-only access to your accounts
+- **💾 Smart Storage**: All data is yours, stored locally or in your own database
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Python 3.10+
+- Your bank login credentials (for Teller Connect)
+
+### Quick Start
 
 ```bash
-# Start the application
+# Install dependencies
+mise run install
+
+# Initialize the database
+mise run db-init
+
+# Start the app
 mise run dev
 
-# Open Teller Connect to link your bank
-open http://localhost:5001/static/teller-connect.html
+# Open in your browser
+open http://localhost:5001
 ```
+
+### Connect Your First Bank Account
+1. Navigate to the "Connect Bank" tab
+2. Select your environment (Development for real banks, Sandbox for testing)
+3. Follow the Teller Connect flow to authorize access to your accounts
+4. Your accounts and balances will sync automatically
 
 ## ✨ Features
 
-### Core Functionality
-- 🏦 **Teller Connect Integration** - Securely connect multiple bank accounts
-- 💰 **Real-time Balance Tracking** - View current balances across all accounts
-- 📊 **Transaction History** - Automatic sync and categorization
-- 📅 **Bill Payment Calendar** - Schedule and track recurring payments
-- 📈 **Weekly Financial Forecast** - Projected balances based on upcoming bills
-- 🔄 **Automatic Sync** - Twice-daily data updates from Teller
-- 📱 **Beautiful UI** - Responsive, modern design
+### Core Pages
+- **Dashboard** - View all accounts with real-time balances, custom names for each account, and net worth calculation
+- **Calendar** - Schedule recurring or one-time payments, see projected balances for each day based on upcoming bills
+- **Connect Bank** - Securely link additional bank accounts via Teller Connect
 
-### Technical Features
-- ✅ Complete REST API with 11+ endpoints
-- ✅ Dual database support (PostgreSQL/SQLite)
-- ✅ Docker containerization
-- ✅ Mock data for development
-- ✅ Comprehensive test coverage
-- ✅ Production-ready deployment
+### Account Management
+- 🔄 Sync data automatically or manually with the "Sync Now" button
+- ✏️ Rename accounts with custom display names
+- 📋 Switch between card and list view layouts
+- 🏦 Support for checking, savings, credit card, and money market accounts
+
+### Payment Scheduling
+- 📅 Schedule bill payments on specific days of the month
+- 🔁 Mark payments as recurring (monthly) or one-time
+- 📊 See the impact on your balance for each day
+- ✅ Categorize payments by type (utilities, subscriptions, etc.)
 
 ## 🏗️ Tech Stack
 
-- **Backend**: Python 3.12, Flask 3.0.0
-- **Database**: PostgreSQL 15 (production) / SQLite (development)
-- **API**: Teller Connect (Financial Data)
-- **ORM**: SQLAlchemy 2.0.23
+- **Backend**: Python 3.12 with Flask
+- **Database**: SQLite (development) / PostgreSQL (production)
+- **API Integration**: Teller Connect for secure bank access
+- **Frontend**: Vanilla JavaScript with responsive CSS
 - **Task Runner**: Mise
-- **Containerization**: Docker & Docker Compose
-- **Visualization**: Plotly 5.18.0, Dash 2.14.2
-- **Scheduling**: APScheduler 3.10.4
-- **WSGI Server**: Gunicorn 21.2.0
+- **Container**: Docker & Docker Compose
 
-## Design Thinking
+## 📁 Project Structure
 
-**CRITICAL**: Choose a clear conceptual direction and execute it with precision. Bold maximalism and refined minimalism both work - the key is intentionality, not intensity.
+```
+teller-home-app/
+├── app.py                 # Main Flask application
+├── src/
+│   ├── models.py         # SQLAlchemy ORM models
+│   ├── teller_client.py  # Teller API integration
+│   └── sync_service.py   # Data synchronization
+├── static/
+│   ├── index.html        # Home page
+│   ├── dashboard.html    # Account balances & overview
+│   ├── calendar.html     # Payment scheduling
+│   └── teller-connect.html # Bank linking
+├── tests/                # Test files and debug utilities
+├── teller_home.db        # SQLite database
+└── mise.toml             # Task definitions
+```
 
-Then implement working code (HTML/CSS/JS, React, Vue, etc.) that is:
-- Production-grade and functional
-- Visually striking and memorable
-- Cohesive with a clear aesthetic point-of-view
-- Meticulously refined in every detail
+## 📝 Available Commands
 
-## Frontend Aesthetics Guidelines
+```bash
+# Database
+mise run db-init      # Initialize database schema
+mise run db-reset     # Clear and reinitialize
 
-Focus on:
-- **Typography**: Choose fonts that are beautiful, unique, and interesting. Avoid generic fonts like Arial and Inter; opt instead for distinctive choices that elevate the frontend's aesthetics; unexpected, characterful font choices. Pair a distinctive display font with a refined body font.
-- **Color & Theme**: Commit to a cohesive aesthetic. Use CSS variables for consistency. Dominant colors with sharp accents outperform timid, evenly-distributed palettes.
-- **Motion**: Use animations for effects and micro-interactions. Prioritize CSS-only solutions for HTML. Use Motion library for React when available. Focus on high-impact moments: one well-orchestrated page load with staggered reveals (animation-delay) creates more delight than scattered micro-interactions. Use scroll-triggering and hover states that surprise.
-- **Spatial Composition**: Unexpected layouts. Asymmetry. Overlap. Diagonal flow. Grid-breaking elements. Generous negative space OR controlled density.
-- **Backgrounds & Visual Details**: Create atmosphere and depth rather than defaulting to solid colors. Add contextual effects and textures that match the overall aesthetic. Apply creative forms like gradient meshes, noise textures, geometric patterns, layered transparencies, dramatic shadows, decorative borders, custom cursors, and grain overlays.
+# Development
+mise run dev          # Start development server
 
-NEVER use generic AI-generated aesthetics like overused font families (Inter, Roboto, Arial, system fonts), cliched color schemes (particularly purple gradients on white backgrounds), predictable layouts and component patterns, and cookie-cutter design that lacks context-specific character.
+# Testing & Quality
+mise run test         # Run test suite
+mise run test-cov     # Run tests with coverage
+mise run lint         # Check code formatting
+mise run format       # Auto-format code
 
-Interpret creatively and make unexpected choices that feel genuinely designed for the context. No design should be the same. Vary between light and dark themes, different fonts, different aesthetics. NEVER converge on common choices (Space Grotesk, for example) across generations.
+# Database Management
+mise run backup-restart  # Backup database and restart app
+```
 
-**IMPORTANT**: Match implementation complexity to the aesthetic vision. Maximalist designs need elaborate code with extensive animations and effects. Minimalist or refined designs need restraint, precision, and careful attention to spacing, typography, and subtle details. Elegance comes from executing the vision well.
+## 🔐 Security
 
-Remember: Agents are capable of extraordinary creative work. Don't hold back, show what can truly be created when thinking outside the box and committing fully to a distinctive vision.
+- All bank connections use Teller's secure OAuth flow - we never see your passwords
+- Data is stored locally in your database
+- The app runs on your machine by default
+- No data is sent to external servers (except Teller for authentication)
+
+## 📚 Documentation
+
+For more detailed information:
+- See `QUICKSTART.md` for step-by-step setup
+- Check `SETUP.md` for advanced configuration
+- Review API endpoints in `DASHBOARD_CALENDAR_GUIDE.md`
+
+## 🤝 Contributing
+
+To improve the app:
+1. Test your changes thoroughly
+2. Run `mise run lint` to check code quality
+3. Add tests for new features in `tests/`
+4. Update this README if adding new functionality
+
+## 📄 License
+
+MIT
