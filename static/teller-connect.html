@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teller Connect - Bank Account Connection</title>
+    <script src="https://cdn.teller.io/connect/connect.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .connect-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+        
+        .connect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .connect-btn:active {
+            transform: translateY(0);
+        }
+        
+        .connect-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .enrollments {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+        }
+        
+        .enrollments h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .enrollment-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .enrollment-info {
+            flex: 1;
+        }
+        
+        .enrollment-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .enrollment-meta {
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .disconnect-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        
+        .disconnect-btn:hover {
+            background: #c82333;
+        }
+        
+        .features {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .features h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .features ul {
+            list-style: none;
+        }
+        
+        .features li {
+            padding: 8px 0;
+            color: #555;
+            display: flex;
+            align-items: center;
+        }
+        
+        .features li:before {
+            content: "✓";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        
+        .environment-toggle {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .environment-toggle label {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .environment-toggle select {
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+        }
+
+        .environment-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f4ff;
+            border-left: 4px solid #667eea;
+            border-radius: 5px;
+            font-size: 13px;
+            color: #333;
+        }
+
+        .environment-info h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+
+        .env-option {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .env-option.active {
+            background-color: #e8efff;
+            border-color: #667eea;
+        }
+
+        .env-option strong {
+            color: #667eea;
+        }
+        
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏦 Connect Your Bank</h1>
+        <p class="subtitle">Securely connect your bank account to view balances, transactions, and get financial insights.</p>
+        
+        <div id="status" class="status"></div>
+        
+        <div class="environment-toggle">
+            <label for="environment">Environment:</label>
+            <select id="environment">
+                <option value="sandbox">Sandbox (Simulated Data)</option>
+                <option value="development">Development (Real Bank Data - Free)</option>
+                <option value="production">Production (Live - Requires KYB)</option>
+            </select>
+        </div>
+        
+        <button id="connect-btn" class="connect-btn">
+            Connect Bank Account
+        </button>
+        
+        <div class="features">
+            <h3>What You'll Get:</h3>
+            <ul>
+                <li>Real-time account balances</li>
+                <li>Transaction history and categorization</li>
+                <li>Bill payment tracking and reminders</li>
+                <li>Weekly financial forecasts</li>
+                <li>Secure, read-only access to your data</li>
+            </ul>
+        </div>
+
+        <div class="environment-info">
+            <h3>Environment Guide</h3>
+            <div id="env-details"></div>
+        </div>
+        
+        <div id="enrollments" class="enrollments" style="display: none;">
+            <h2>Connected Accounts</h2>
+            <div id="enrollments-list"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        const APP_ID = 'app_pnpkbje8trq7hl1g6g000';
+        let tellerConnect = null;
+        
+        // Environment information
+        const environmentInfo = {
+            sandbox: {
+                title: 'Sandbox (Simulated Data)',
+                description: 'Perfect for testing and development',
+                features: [
+                    '✓ Simulated bank data',
+                    '✓ No real connections',
+                    '✓ Unlimited enrollments',
+                    '✓ No certificate required'
+                ],
+                warning: 'Data is simulated and will not reflect real bank accounts.'
+            },
+            development: {
+                title: 'Development (Real Bank Data)',
+                description: 'Connect to real banks for testing without going live',
+                features: [
+                    '✓ Real bank connections',
+                    '✓ Up to 100 active enrollments',
+                    '✓ Free to use',
+                    '✓ Requires client certificate'
+                ],
+                warning: '⚠️ This is a real connection. Use only with authorized test accounts.'
+            },
+            production: {
+                title: 'Production (Live)',
+                description: 'For live, production applications',
+                features: [
+                    '✓ Real bank connections',
+                    '✓ Unlimited enrollments',
+                    '✓ Full KYB verification required',
+                    '✓ Requires client certificate'
+                ],
+                warning: '⚠️ This connects to real user accounts with real data.'
+            }
+        };
+        
+        // Display environment information
+        function updateEnvironmentInfo(environment) {
+            const info = environmentInfo[environment];
+            const envDetails = document.getElementById('env-details');
+            
+            if (info) {
+                envDetails.innerHTML = `
+                    <div class="env-option active">
+                        <strong>${info.title}</strong>
+                        <p>${info.description}</p>
+                        <ul style="margin: 8px 0; padding-left: 20px;">
+                            ${info.features.map(f => `<li>${f}</li>`).join('')}
+                        </ul>
+                        ${info.warning ? `<p style="margin: 8px 0; color: #d97706; font-size: 12px;"><strong>Note:</strong> ${info.warning}</p>` : ''}
+                    </div>
+                `;
+            }
+        }
+        
+        // Initialize Teller Connect
+        function initTellerConnect(environment) {
+            tellerConnect = TellerConnect.setup({
+                applicationId: APP_ID,
+                environment: environment,
+                onSuccess: handleSuccess,
+                onExit: handleExit,
+                onFailure: handleFailure
+            });
+        }
+        
+        // Initialize with sandbox environment
+        initTellerConnect('sandbox');
+        updateEnvironmentInfo('sandbox');
+        
+        // Handle environment change
+        document.getElementById('environment').addEventListener('change', (e) => {
+            const selectedEnv = e.target.value;
+            initTellerConnect(selectedEnv);
+            updateEnvironmentInfo(selectedEnv);
+            showStatus(`Switched to ${selectedEnv} mode`, 'info');
+        });
+        
+        // Handle successful enrollment
+        async function handleSuccess(enrollment) {
+            console.log('✅ Enrollment successful!', enrollment);
+            showStatus('Processing enrollment...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/teller-connect/enroll`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        access_token: enrollment.accessToken,
+                        enrollment_id: enrollment.enrollment.id,
+                        user_id: enrollment.user?.id || 'default_user',
+                        institution_name: enrollment.enrollment.institution?.name
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showStatus(
+                        `✅ Success! Connected and synced ${result.synced?.accounts_count || 0} accounts.`,
+                        'success'
+                    );
+                    
+                    // Refresh enrollments list
+                    setTimeout(() => loadEnrollments(), 1000);
+                } else {
+                    showStatus(`❌ Error: ${result.error || 'Failed to save enrollment'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error saving enrollment:', error);
+                showStatus(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Handle user exit
+        function handleExit() {
+            console.log('ℹ️ User exited enrollment');
+            showStatus('Enrollment cancelled', 'info');
+        }
+        
+        // Handle enrollment failure
+        function handleFailure(error) {
+            console.error('❌ Enrollment failed:', error);
+            showStatus(`❌ Enrollment failed: ${error.message || 'Unknown error'}`, 'error');
+        }
+        
+        // Show status message
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            statusEl.style.display = 'block';
+            
+            // Auto-hide info messages
+            if (type === 'info') {
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 3000);
+            }
+        }
+        
+        // Load existing enrollments
+        async function loadEnrollments() {
+            try {
+                const response = await fetch(`${API_BASE}/api/teller-connect/status?user_id=default_user`);
+                const data = await response.json();
+                
+                if (data.enrollments && data.enrollments.length > 0) {
+                    document.getElementById('enrollments').style.display = 'block';
+                    
+                    const listEl = document.getElementById('enrollments-list');
+                    listEl.innerHTML = data.enrollments.map(e => `
+                        <div class="enrollment-item">
+                            <div class="enrollment-info">
+                                <div class="enrollment-name">
+                                    ${e.institution_name || 'Bank Account'}
+                                </div>
+                                <div class="enrollment-meta">
+                                    Connected: ${new Date(e.created_at).toLocaleDateString()}
+                                    ${e.last_synced ? `• Last synced: ${new Date(e.last_synced).toLocaleString()}` : ''}
+                                </div>
+                            </div>
+                            <button class="disconnect-btn" onclick="disconnectEnrollment('${e.enrollment_id}')">
+                                Disconnect
+                            </button>
+                        </div>
+                    `).join('');
+                } else {
+                    document.getElementById('enrollments').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading enrollments:', error);
+            }
+        }
+        
+        // Disconnect enrollment
+        async function disconnectEnrollment(enrollmentId) {
+            if (!confirm('Are you sure you want to disconnect this account?')) {
+                return;
+            }
+            
+            showStatus('Disconnecting...', 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/teller-connect/disconnect/${enrollmentId}`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showStatus('✅ Account disconnected', 'success');
+                    loadEnrollments();
+                } else {
+                    showStatus(`❌ Error: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Connect button click handler
+        document.getElementById('connect-btn').addEventListener('click', () => {
+            if (tellerConnect) {
+                tellerConnect.open();
+            } else {
+                showStatus('Teller Connect not initialized', 'error');
+            }
+        });
+        
+        // Load enrollments on page load
+        loadEnrollments();
+    </script>
+</body>
+</html>

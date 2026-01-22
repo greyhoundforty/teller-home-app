@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Teller Home App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-left h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-left p {
+            color: #94a3b8;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            border: 1px solid #475569;
+            background: rgba(30, 41, 59, 0.8);
+            color: #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-btn:hover {
+            background: rgba(71, 85, 105, 0.8);
+            border-color: #64748b;
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            border-color: transparent;
+            color: white;
+        }
+
+        .sync-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sync-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .sync-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #475569;
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-label {
+            color: #94a3b8;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            border-radius: 2px;
+        }
+
+        .accounts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .accounts-grid.list-view {
+            grid-template-columns: 1fr;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .view-toggle button {
+            padding: 8px 14px;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #475569;
+            color: #94a3b8;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .view-toggle button.active {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: #4f46e5;
+            color: #93c5fd;
+        }
+
+        .view-toggle button:hover {
+            border-color: #64748b;
+            background: rgba(71, 85, 105, 0.6);
+        }
+
+        .account-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%);
+            border: 1px solid #475569;
+            border-radius: 16px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .account-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .account-card:hover {
+            transform: translateY(-8px);
+            border-color: #64748b;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .account-card:hover::before {
+            opacity: 1;
+        }
+
+        .account-card.list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+        }
+
+        .account-card.list-item .account-header {
+            flex: 1;
+            margin-bottom: 0;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .account-card.list-item .balance-section {
+            flex: 1;
+            margin: 0;
+            padding: 0 20px;
+            border-bottom: none;
+            border-left: 1px solid #334155;
+            padding-left: 20px;
+        }
+
+        .account-card.list-item .account-actions {
+            flex: 1;
+            justify-content: flex-end;
+        }
+
+        .edit-name-btn {
+            padding: 4px 8px !important;
+            font-size: 11px !important;
+            flex: 0 !important;
+            min-width: auto;
+        }
+
+        .edit-name-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .edit-name-modal.open {
+            display: flex;
+        }
+
+        .edit-name-modal-content {
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .edit-name-modal-content h3 {
+            color: #f1f5f9;
+            margin-bottom: 16px;
+        }
+
+        .edit-name-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .edit-name-input {
+            padding: 10px 12px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid #475569;
+            border-radius: 6px;
+            color: #f1f5f9;
+            font-size: 14px;
+        }
+
+        .edit-name-input::placeholder {
+            color: #64748b;
+        }
+
+        .edit-name-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            background: rgba(30, 41, 59, 0.9);
+        }
+
+        .edit-name-hint {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: -8px;
+        }
+
+        .edit-name-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .edit-name-buttons button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .edit-name-buttons .save-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .edit-name-buttons .save-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .edit-name-buttons .cancel-btn {
+            background: rgba(30, 41, 59, 0.8);
+            color: #94a3b8;
+            border: 1px solid #475569;
+        }
+
+        .edit-name-buttons .cancel-btn:hover {
+            background: rgba(71, 85, 105, 0.8);
+        }
+
+        .account-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .account-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .account-type {
+            display: inline-block;
+            padding: 4px 12px;
+            background: rgba(99, 102, 241, 0.2);
+            color: #93c5fd;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .account-type.checking {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+        }
+
+        .account-type.savings {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+        }
+
+        .account-type.credit {
+            background: rgba(251, 146, 60, 0.2);
+            color: #fdba74;
+        }
+
+        .account-institution {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 8px;
+        }
+
+        .balance-section {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .balance-label {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .balance-amount {
+            font-size: 32px;
+            font-weight: 700;
+            color: #f1f5f9;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .balance-amount.positive {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .balance-amount.negative {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .balance-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 12px;
+        }
+
+        .currency {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .account-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .account-action-btn {
+            flex: 1;
+            padding: 8px 12px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid #475569;
+            color: #93c5fd;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .account-action-btn:hover {
+            background: rgba(99, 102, 241, 0.2);
+            border-color: #4f46e5;
+        }
+
+        .status {
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .status.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status.info {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+
+        .empty-state h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #94a3b8;
+        }
+
+        .empty-state p {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .empty-state-btn {
+            display: inline-block;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .empty-state-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(96, 165, 250, 0.3);
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            color: #94a3b8;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(96, 165, 250, 0.2);
+            border-top-color: #60a5fa;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .accounts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-row {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+
+            .balance-amount {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-left">
+                <h1>💰 Dashboard</h1>
+                <p id="lastSync">Last synced: Never</p>
+            </div>
+            <div class="header-actions">
+                <a href="/" class="nav-btn active">Dashboard</a>
+                <a href="/static/calendar.html" class="nav-btn">Calendar</a>
+                <a href="/static/teller-connect.html" class="nav-btn">Connect Bank</a>
+                <button id="syncBtn" class="sync-btn">
+                    <span>Sync Now</span>
+                </button>
+            </div>
+        </header>
+
+        <div id="status" class="status"></div>
+
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-label">Total Assets</div>
+                <div class="stat-value" id="totalAssets">$0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Liabilities</div>
+                <div class="stat-value" id="totalLiabilities">$0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Net Worth</div>
+                <div class="stat-value" id="netWorth">$0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Connected Accounts</div>
+                <div class="stat-value" id="accountCount">0</div>
+            </div>
+        </div>
+
+        <div class="section-title">Your Accounts</div>
+
+        <div class="view-toggle">
+            <button id="cardViewBtn" class="active" title="Card view">📇 Cards</button>
+            <button id="listViewBtn" title="List view">📋 List</button>
+        </div>
+
+        <div id="accountsContainer" class="accounts-grid">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+            </div>
+        </div>
+
+        <div id="editNameModal" class="edit-name-modal">
+            <div class="edit-name-modal-content">
+                <h3>Edit Account Name</h3>
+                <div class="edit-name-form">
+                    <div>
+                        <label style="color: #94a3b8; font-size: 12px;">Original Name:</label>
+                        <div id="originalName" style="color: #f1f5f9; margin-top: 4px; font-size: 14px;"></div>
+                    </div>
+                    <div>
+                        <label for="displayNameInput" style="color: #94a3b8; font-size: 12px;">Display Name:</label>
+                        <input 
+                            id="displayNameInput" 
+                            class="edit-name-input" 
+                            type="text" 
+                            placeholder="e.g. My Checking, Wife's Chase"
+                            maxlength="50"
+                        />
+                        <div class="edit-name-hint">Leave blank to use original name</div>
+                    </div>
+                </div>
+                <div class="edit-name-buttons">
+                    <button class="save-btn" onclick="saveDisplayName()">Save</button>
+                    <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let currentViewMode = 'card'; // 'card' or 'list'
+        let currentEditingAccountId = null;
+
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        // Get account type badge class
+        function getAccountTypeClass(type) {
+            const typeMap = {
+                'checking': 'checking',
+                'savings': 'savings',
+                'credit_card': 'credit',
+                'credit': 'credit'
+            };
+            return typeMap[type?.toLowerCase()] || 'checking';
+        }
+
+        // Get account type display name
+        function getAccountTypeName(type) {
+            const nameMap = {
+                'checking': 'Checking',
+                'savings': 'Savings',
+                'credit_card': 'Credit Card',
+                'credit': 'Credit',
+                'money_market': 'Money Market',
+                'investment': 'Investment'
+            };
+            return nameMap[type?.toLowerCase()] || type || 'Account';
+        }
+
+        // Show status message
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            statusEl.style.display = 'block';
+
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 4000);
+            }
+        }
+
+        // Get display name for account
+        function getAccountDisplayName(account) {
+            return account.display_name || account.name;
+        }
+
+        // Open edit name modal
+        function openEditModal(accountId, accountName, currentDisplayName) {
+            currentEditingAccountId = accountId;
+            document.getElementById('originalName').textContent = accountName;
+            document.getElementById('displayNameInput').value = currentDisplayName || '';
+            document.getElementById('editNameModal').classList.add('open');
+            document.getElementById('displayNameInput').focus();
+        }
+
+        // Close edit name modal
+        function closeEditModal() {
+            document.getElementById('editNameModal').classList.remove('open');
+            currentEditingAccountId = null;
+        }
+
+        // Save display name
+        async function saveDisplayName() {
+            const displayName = document.getElementById('displayNameInput').value.trim();
+            
+            if (!currentEditingAccountId) return;
+
+            try {
+                const response = await fetch(
+                    `${API_BASE}/api/accounts/${currentEditingAccountId}/display-name`,
+                    {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ display_name: displayName })
+                    }
+                );
+
+                if (response.ok) {
+                    showStatus('✅ Account name updated!', 'success');
+                    closeEditModal();
+                    loadAccounts(); // Reload to show updated names
+                } else {
+                    const error = await response.json();
+                    showStatus(`Error: ${error.error || 'Failed to update name'}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Load accounts and balances
+        async function loadAccounts() {
+            try {
+                const response = await fetch(`${API_BASE}/api/accounts`);
+                const data = await response.json();
+
+                if (!data.accounts || data.accounts.length === 0) {
+                    showEmptyState();
+                    updateStats([]);
+                    return;
+                }
+
+                renderAccounts(data.accounts);
+                updateStats(data.accounts);
+                updateLastSync();
+            } catch (error) {
+                console.error('Error loading accounts:', error);
+                showStatus(`Error loading accounts: ${error.message}`, 'error');
+            }
+        }
+
+        // Update statistics
+        function updateStats(accounts) {
+            let totalAssets = 0;
+            let totalLiabilities = 0;
+
+            accounts.forEach(account => {
+                const balance = account.current_balance || 0;
+                if (account.type === 'credit_card' || account.type === 'credit') {
+                    totalLiabilities += Math.abs(balance);
+                } else {
+                    totalAssets += balance;
+                }
+            });
+
+            const netWorth = totalAssets - totalLiabilities;
+
+            document.getElementById('totalAssets').textContent = formatCurrency(totalAssets);
+            document.getElementById('totalLiabilities').textContent = formatCurrency(totalLiabilities);
+            document.getElementById('netWorth').innerHTML = 
+                `<span class="${netWorth >= 0 ? 'positive' : 'negative'}">${formatCurrency(netWorth)}</span>`;
+            document.getElementById('accountCount').textContent = accounts.length;
+        }
+
+        // Render account cards
+        function renderAccounts(accounts) {
+            const container = document.getElementById('accountsContainer');
+            const isListView = currentViewMode === 'list';
+            
+            const html = accounts.map(account => {
+                const balance = account.current_balance || 0;
+                const balanceClass = balance >= 0 ? 'positive' : 'negative';
+                const typeClass = getAccountTypeClass(account.type);
+                const typeName = getAccountTypeName(account.type);
+                const displayName = getAccountDisplayName(account);
+
+                return `
+                    <div class="account-card ${isListView ? 'list-item' : ''}">
+                        <div class="account-header">
+                            <div>
+                                <div class="account-name">${displayName}</div>
+                                <div class="account-institution">${account.institution_name || 'Unknown Bank'}</div>
+                            </div>
+                            <span class="account-type ${typeClass}">${typeName}</span>
+                        </div>
+
+                        ${!isListView ? `
+                        <div class="balance-section">
+                            <div class="balance-label">Current Balance</div>
+                            <div class="balance-amount ${balanceClass}">
+                                ${formatCurrency(balance)}
+                            </div>
+                            <div class="balance-meta">
+                                <span>ID: ${account.id.substring(0, 8)}...</span>
+                                <span>${account.currency || 'USD'}</span>
+                            </div>
+                        </div>
+
+                        <div class="account-actions">
+                            <button class="account-action-btn" onclick="viewTransactions('${account.id}', '${displayName}')">
+                                Transactions
+                            </button>
+                            <button class="account-action-btn edit-name-btn" onclick="openEditModal('${account.id}', '${account.name.replace(/'/g, "\\'")}', '${(account.display_name || '').replace(/'/g, "\\'")}')">
+                                ✏️ Rename
+                            </button>
+                        </div>
+                        ` : `
+                        <div class="balance-section">
+                            <div class="balance-label">Balance</div>
+                            <div class="balance-amount ${balanceClass}">
+                                ${formatCurrency(balance)}
+                            </div>
+                        </div>
+
+                        <div class="account-actions">
+                            <button class="account-action-btn edit-name-btn" onclick="openEditModal('${account.id}', '${account.name.replace(/'/g, "\\'")}', '${(account.display_name || '').replace(/'/g, "\\'")}')">
+                                ✏️ Rename
+                            </button>
+                            <button class="account-action-btn" onclick="copyToClipboard('${account.id}')">
+                                Copy ID
+                            </button>
+                        </div>
+                        `}
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = html;
+        }
+
+        // Show empty state
+        function showEmptyState() {
+            const container = document.getElementById('accountsContainer');
+            container.innerHTML = `
+                <div class="empty-state" style="grid-column: 1/-1;">
+                    <h2>No Accounts Connected</h2>
+                    <p>Connect your first bank account to get started</p>
+                    <a href="/static/teller-connect.html" class="empty-state-btn">
+                        Connect Bank Account
+                    </a>
+                </div>
+            `;
+        }
+
+        // View transactions for account
+        function viewTransactions(accountId, accountName) {
+            // Store in sessionStorage for the next page
+            sessionStorage.setItem('selectedAccountId', accountId);
+            sessionStorage.setItem('selectedAccountName', accountName);
+            
+            // Navigate to transactions page (create this later)
+            alert(`Transactions for ${accountName} - coming soon!`);
+            // window.location.href = `/static/transactions.html`;
+        }
+
+        // Copy to clipboard
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showStatus('Account ID copied!', 'success');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        }
+
+        // Sync data
+        async function syncData() {
+            const btn = document.getElementById('syncBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Syncing...';
+
+            try {
+                showStatus('Syncing with Teller...', 'info');
+                const response = await fetch(`${API_BASE}/api/sync`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showStatus('✅ Sync complete! Data updated.', 'success');
+                    loadAccounts(); // Reload accounts after sync
+                } else {
+                    showStatus(`Error: ${result.error || 'Sync failed'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Sync error:', error);
+                showStatus(`Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>Sync Now</span>';
+            }
+        }
+
+        // Update last sync time
+        function updateLastSync() {
+            const lastSyncEl = document.getElementById('lastSync');
+            const now = new Date();
+            lastSyncEl.textContent = `Last synced: ${now.toLocaleTimeString()}`;
+        }
+
+        // Sync button handler
+        document.getElementById('syncBtn').addEventListener('click', syncData);
+
+        // View toggle buttons
+        document.getElementById('cardViewBtn').addEventListener('click', () => {
+            currentViewMode = 'card';
+            document.getElementById('cardViewBtn').classList.add('active');
+            document.getElementById('listViewBtn').classList.remove('active');
+            document.getElementById('accountsContainer').classList.remove('list-view');
+            loadAccounts();
+        });
+
+        document.getElementById('listViewBtn').addEventListener('click', () => {
+            currentViewMode = 'list';
+            document.getElementById('listViewBtn').classList.add('active');
+            document.getElementById('cardViewBtn').classList.remove('active');
+            document.getElementById('accountsContainer').classList.add('list-view');
+            loadAccounts();
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('editNameModal').addEventListener('click', (e) => {
+            if (e.target.id === 'editNameModal') {
+                closeEditModal();
+            }
+        });
+
+        // Allow Enter key to save in modal
+        document.getElementById('displayNameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                saveDisplayName();
+            } else if (e.key === 'Escape') {
+                closeEditModal();
+            }
+        });
+
+        // Load accounts on page load
+        loadAccounts();
+
+        // Refresh accounts every 5 minutes
+        setInterval(loadAccounts, 5 * 60 * 1000);
+    </script>
+</body>
+</html>

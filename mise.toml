@@ -1,0 +1,139 @@
+[tools]
+fnox = "latest"
+python = "3.12"
+
+[tasks.setup]
+description = "Initial project setup - create venv and install dependencies"
+run = [
+    "python3 -m venv .venv",
+    "source .venv/bin/activate && uv pip install --upgrade pip",
+    "source .venv/bin/activate && uv pip install -r requirements.txt"
+]
+
+[tasks.install]
+description = "Install/update Python dependencies"
+run = "source .venv/bin/activate && uv pip install -r requirements.txt"
+
+[tasks.db-init]
+description = "Initialize the database schema"
+run = "source .venv/bin/activate && python -m src.models"
+
+[tasks.db-seed]
+description = "Seed database with mock data"
+run = "source .venv/bin/activate && python test_sync_mock.py"
+
+[tasks.db-reset]
+description = "Reset database - drop, recreate, and seed with mock data"
+run = [
+    "rm -f teller_home.db",
+    "source .venv/bin/activate && python -m src.models",
+    "source .venv/bin/activate && python test_sync_mock.py"
+]
+
+[tasks.postgres-up]
+description = "Start PostgreSQL container with initialized schema"
+run = "docker-compose up -d postgres"
+
+[tasks.postgres-down]
+description = "Stop PostgreSQL container"
+run = "docker-compose down"
+
+[tasks.postgres-logs]
+description = "View PostgreSQL container logs"
+run = "docker-compose logs -f postgres"
+
+[tasks.postgres-shell]
+description = "Open PostgreSQL shell"
+run = "docker-compose exec postgres psql -U teller -d teller_home"
+
+[tasks.run]
+description = "Run the Flask application"
+run = "source .venv/bin/activate && python app.py"
+
+[tasks.dev]
+description = "Run the Flask application in development mode with auto-reload"
+run = "source .venv/bin/activate && FLASK_ENV=development python app.py"
+alias = ["start"]
+
+[tasks.test]
+description = "Run all tests"
+run = "source .venv/bin/activate && pytest tests/ --verbose"
+
+[tasks.test-cov]
+description = "Run tests with coverage report"
+run = [
+    "source .venv/bin/activate && pytest tests/ -v --cov=src --cov-report=html",
+    "echo 'Coverage report generated in htmlcov/index.html'"
+]
+
+[tasks.test-api]
+description = "Test API endpoints (server must be running)"
+run = "source .venv/bin/activate && python test_api.py"
+
+[tasks.lint]
+description = "Run linters (black, isort, flake8)"
+run = [
+    "source .venv/bin/activate && black src/ tests/ --check",
+    "source .venv/bin/activate && isort src/ tests/ --check-only",
+    "source .venv/bin/activate && flake8 src/ tests/"
+]
+
+[tasks.format]
+description = "Format code with black and isort"
+run = [
+    "source .venv/bin/activate && black src/ tests/",
+    "source .venv/bin/activate && isort src/ tests/"
+]
+
+[tasks.typecheck]
+description = "Run mypy type checking"
+run = "source .venv/bin/activate && mypy src/"
+
+[tasks.clean]
+description = "Clean up generated files and caches"
+run = [
+    "find . -type d -name '__pycache__' -exec rm -rf {} +",
+    "find . -type f -name '*.pyc' -delete",
+    "find . -type d -name '.pytest_cache' -exec rm -rf {} +",
+    "find . -type d -name 'htmlcov' -exec rm -rf {} +",
+    "find . -type f -name '.coverage' -delete",
+    "rm -rf .mypy_cache"
+]
+
+[tasks.docker-build]
+description = "Build Docker image"
+run = "docker build -t teller-home-app ."
+
+[tasks.docker-up]
+description = "Start all services with Docker Compose"
+run = "docker-compose up -d"
+
+[tasks.docker-down]
+description = "Stop all Docker services"
+run = "docker-compose down"
+
+[tasks.docker-logs]
+description = "View Docker container logs"
+run = "docker-compose logs -f"
+
+[tasks.sync]
+description = "Manually trigger data sync from Teller"
+run = "source .venv/bin/activate && python -m src.sync_service"
+
+[tasks.auth-test]
+description = "Test Teller API authentication"
+run = "source .venv/bin/activate && python understand_teller_auth.py"
+[tasks.backup-restart]
+description = "Stop the app, backup the database, and restart the app"
+run = [
+    "echo '🛑 Stopping Flask app...'",
+    "pkill -f 'python app.py' || true",
+    "sleep 2",
+    "echo '💾 Backing up database...'",
+    "cp teller_home.db teller_home.db.backup.$(date +%Y%m%d_%H%M%S)",
+    "ls -lh teller_home.db.backup.* | tail -1 | awk '{print \"✅ Backup created: \" $9}'",
+    "echo '🚀 Restarting Flask app...'",
+    "source .venv/bin/activate && python app.py &",
+    "sleep 3",
+    "echo '✅ App restarted. Visit http://localhost:5001'"
+]

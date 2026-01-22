@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: teller-home-postgres
+    environment:
+      POSTGRES_USER: teller
+      POSTGRES_PASSWORD: teller_dev_password
+      POSTGRES_DB: teller_home
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U teller"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - teller-network
+
+  app:
+    build: .
+    container_name: teller-home-app
+    environment:
+      DATABASE_URL: postgresql://teller:teller_dev_password@postgres:5432/teller_home
+      TELLER_APP_ID: ${TELLER_APP_ID}
+      TELLER_APP_TOKEN: ${TELLER_APP_TOKEN}
+      FLASK_ENV: production
+      SECRET_KEY: ${SECRET_KEY:-change-this-secret-key-in-production}
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./authentication:/app/authentication:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - teller-network
+    command: gunicorn --bind 0.0.0.0:5001 --workers 4 app:app
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  teller-network:
+    driver: bridge

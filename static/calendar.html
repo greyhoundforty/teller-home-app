@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar - Teller Home App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-left h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-left p {
+            color: #94a3b8;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            border: 1px solid #475569;
+            background: rgba(30, 41, 59, 0.8);
+            color: #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-btn:hover {
+            background: rgba(71, 85, 105, 0.8);
+            border-color: #64748b;
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            border-color: transparent;
+            color: white;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 24px;
+        }
+
+        .calendar-wrapper {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #475569;
+            border-radius: 16px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .calendar-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 8px;
+        }
+
+        .calendar-nav button {
+            width: 36px;
+            height: 36px;
+            border: 1px solid #475569;
+            background: rgba(71, 85, 105, 0.3);
+            color: #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+        }
+
+        .calendar-nav button:hover {
+            background: rgba(71, 85, 105, 0.6);
+            border-color: #64748b;
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            width: 100%;
+        }
+
+        .day-header {
+            text-align: center;
+            font-weight: 600;
+            color: #94a3b8;
+            padding: 12px 0;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            min-height: 100px;
+        }
+
+        .calendar-day:hover {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: #475569;
+        }
+
+        .calendar-day.other-month {
+            opacity: 0.3;
+            cursor: default;
+        }
+
+        .calendar-day.other-month:hover {
+            background: rgba(15, 23, 42, 0.5);
+            border-color: #334155;
+        }
+
+        .calendar-day.today {
+            border: 2px solid #60a5fa;
+            background: rgba(96, 165, 250, 0.1);
+        }
+
+        .day-number {
+            font-weight: 600;
+            color: #f1f5f9;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .day-balance {
+            font-size: 13px;
+            font-weight: 700;
+            padding: 4px 6px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            text-align: center;
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .day-balance.negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .day-balance.low {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .day-payments {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .day-payment-badge {
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            background: rgba(99, 102, 241, 0.3);
+            color: #93c5fd;
+        }
+
+        .day-payment-badge.income {
+            background: rgba(16, 185, 129, 0.3);
+            color: #86efac;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #475569;
+            border-radius: 16px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #f1f5f9;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title::before {
+            content: '';
+            width: 3px;
+            height: 18px;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            border-radius: 1px;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        label {
+            display: block;
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            color: #f1f5f9;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        input[type="date"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #60a5fa;
+            background: rgba(15, 23, 42, 0.9);
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .add-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(96, 165, 250, 0.3);
+        }
+
+        .add-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .payments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .payment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+
+        .payment-info {
+            flex: 1;
+        }
+
+        .payment-name {
+            font-weight: 500;
+            color: #f1f5f9;
+            font-size: 13px;
+        }
+
+        .payment-meta {
+            font-size: 11px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+
+        .payment-amount {
+            font-weight: 600;
+            color: #f1f5f9;
+            text-align: right;
+            min-width: 60px;
+            font-size: 13px;
+        }
+
+        .payment-delete {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .payment-delete:hover {
+            background: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: none;
+            margin-bottom: 12px;
+        }
+
+        .status.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status.info {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .summary-stat {
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .summary-label {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-top: 4px;
+        }
+
+        .empty-list {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                flex-direction: row;
+                max-height: 200px;
+            }
+
+            .card {
+                flex: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .calendar {
+                gap: 6px;
+            }
+
+            .calendar-day {
+                min-height: 80px;
+            }
+
+            .day-payment-badge {
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-left">
+                <h1>📅 Calendar</h1>
+                <p id="currentMonth"></p>
+            </div>
+            <div class="header-actions">
+                <a href="/static/dashboard.html" class="nav-btn">Dashboard</a>
+                <a href="/static/calendar.html" class="nav-btn active">Calendar</a>
+                <a href="/static/teller-connect.html" class="nav-btn">Connect Bank</a>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="calendar-wrapper">
+                <div class="calendar-header">
+                    <div class="calendar-title" id="calendarTitle"></div>
+                    <div class="calendar-nav">
+                        <button onclick="previousMonth()">&larr;</button>
+                        <button onclick="today()">Today</button>
+                        <button onclick="nextMonth()">&rarr;</button>
+                    </div>
+                </div>
+
+                <div class="calendar" id="calendar">
+                    <!-- Calendar grid will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="card">
+                    <div class="card-title">Add Payment</div>
+                    <div id="statusMessage" class="status"></div>
+
+                    <form id="paymentForm" onsubmit="addPayment(event)">
+                        <div class="form-group">
+                            <label for="paymentName">Payment Name</label>
+                            <input type="text" id="paymentName" placeholder="e.g., Netflix" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="paymentAmount">Amount</label>
+                                <input type="number" id="paymentAmount" placeholder="0.00" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="paymentDay">Day of Month</label>
+                                <input type="number" id="paymentDay" min="1" max="31" placeholder="1-31" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="paymentCategory">Category</label>
+                            <select id="paymentCategory">
+                                <option value="">Select a category</option>
+                                <option value="Entertainment">Entertainment</option>
+                                <option value="Utilities">Utilities</option>
+                                <option value="Food">Food</option>
+                                <option value="Transportation">Transportation</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Shopping">Shopping</option>
+                                <option value="Subscriptions">Subscriptions</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="paymentRecurring">Payment Type</label>
+                            <select id="paymentRecurring">
+                                <option value="true">Recurring (Monthly)</option>
+                                <option value="false">One-Time</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="add-btn">Add Payment</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Summary</div>
+                    <div class="summary-stat">
+                        <div class="summary-label">Total Payments</div>
+                        <div class="summary-value" id="totalPayments">$0.00</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="summary-label">This Month</div>
+                        <div class="summary-value" id="monthlyTotal">$0.00</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="summary-label">Count</div>
+                        <div class="summary-value" id="paymentCount">0</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Scheduled Payments</div>
+                    <div id="paymentsList" class="payments-list">
+                        <div class="empty-list">No payments yet</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let currentDate = new Date();
+        let payments = [];
+        let accounts = [];
+        let currentBalance = 0;
+
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        // Load accounts from API
+        async function loadAccounts() {
+            try {
+                const response = await fetch(`${API_BASE}/api/accounts`);
+                const data = await response.json();
+                accounts = data.accounts || [];
+                
+                // Calculate total current balance (assets - liabilities)
+                currentBalance = accounts.reduce((total, account) => {
+                    const balance = account.current_balance || 0;
+                    if (account.type === 'credit' || account.subtype === 'credit_card') {
+                        return total - Math.abs(balance);
+                    }
+                    return total + balance;
+                }, 0);
+            } catch (error) {
+                console.error('Error loading accounts:', error);
+                showStatus('Error loading accounts', 'error');
+            }
+        }
+
+        // Show status message
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            statusEl.style.display = 'block';
+
+            if (type === 'success' || type === 'info') {
+                setTimeout(() => {
+                    statusEl.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        // Load payments from API
+        async function loadPayments() {
+            try {
+                const response = await fetch(`${API_BASE}/api/scheduled-payments`);
+                const data = await response.json();
+                payments = data.payments || [];
+                // Reload accounts to get latest balances for projection
+                await loadAccounts();
+                renderCalendar();
+                updateSummary();
+                renderPaymentsList();
+            } catch (error) {
+                console.error('Error loading payments:', error);
+                showStatus('Error loading payments', 'error');
+            }
+        }
+
+        // Get month name
+        function getMonthName(date) {
+            const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+            return months[date.getMonth()];
+        }
+
+        // Update calendar title
+        function updateCalendarTitle() {
+            const title = `${getMonthName(currentDate)} ${currentDate.getFullYear()}`;
+            document.getElementById('calendarTitle').textContent = title;
+            document.getElementById('currentMonth').textContent = title;
+        }
+
+        // Calculate projected balances for each day
+        function calculateProjectedBalances(startDate, endDate) {
+            const balances = {};
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            let date = new Date(startDate);
+            
+            while (date <= endDate) {
+                const dateKey = date.toDateString();
+                const currentDay = date.getDate();
+                const todayDay = today.getDate();
+                
+                // Calculate all payments up to and including this date
+                // This includes both past and future payments
+                const paymentsUpToDate = payments.filter(p => {
+                    const paymentDay = p.day_of_month;
+                    const isRecurring = p.is_recurring !== false; // Default to recurring if not specified
+                    
+                    // For dates in current month
+                    if (date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear()) {
+                        // Always include one-time payments if day matches
+                        if (!isRecurring && paymentDay === currentDay) {
+                            return true;
+                        }
+                        // Include recurring payments from start of month through current date
+                        if (isRecurring && paymentDay <= currentDay) {
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+                
+                const totalPayments = paymentsUpToDate.reduce((sum, p) => sum + p.amount, 0);
+                balances[dateKey] = currentBalance - totalPayments;
+                
+                date.setDate(date.getDate() + 1);
+            }
+            
+            return balances;
+        }
+
+        // Calculate projected balances for each day
+        function calculateProjectedBalances(startDate, endDate) {
+            const balances = {};
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            let date = new Date(startDate);
+            
+            while (date <= endDate) {
+                const dateKey = date.toDateString();
+                const currentDay = date.getDate();
+                const todayDay = today.getDate();
+                
+                // For past days, show current balance
+                if (date < today) {
+                    balances[dateKey] = currentBalance;
+                } else {
+                    // For today and future days, calculate projected balance
+                    // Sum all payments that occur from today up to (and including) this date
+                    const paymentsUpToDate = payments.filter(p => {
+                        const paymentDay = p.day_of_month;
+                        // If we're looking at a future date
+                        if (date >= today) {
+                            // Include payments between today's day and current day
+                            if (currentDay >= todayDay) {
+                                return paymentDay >= todayDay && paymentDay <= currentDay;
+                            } else {
+                                // Handle month wraparound (rare case for calendar view)
+                                return paymentDay >= todayDay || paymentDay <= currentDay;
+                            }
+                        }
+                        return false;
+                    });
+                    
+                    const totalPayments = paymentsUpToDate.reduce((sum, p) => sum + p.amount, 0);
+                    balances[dateKey] = currentBalance - totalPayments;
+                }
+                
+                date.setDate(date.getDate() + 1);
+            }
+            
+            return balances;
+        }
+
+        // Render calendar
+        function renderCalendar() {
+            updateCalendarTitle();
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const today = new Date();
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+            const calendarContainer = document.getElementById('calendar');
+            calendarContainer.innerHTML = '';
+
+            // Add day headers
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            dayNames.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'day-header';
+                header.textContent = day;
+                calendarContainer.appendChild(header);
+            });
+
+            let date = new Date(startDate);
+            const endDate = new Date(lastDay);
+            endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
+
+            // Calculate projected balances for each day
+            const projectedBalances = calculateProjectedBalances(startDate, endDate);
+
+            while (date <= endDate) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'calendar-day';
+
+                if (date.getMonth() !== month) {
+                    dayEl.classList.add('other-month');
+                }
+
+                if (date.toDateString() === today.toDateString()) {
+                    dayEl.classList.add('today');
+                }
+
+                // Add day number
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'day-number';
+                dayNumber.textContent = date.getDate();
+                dayEl.appendChild(dayNumber);
+
+                // Add projected balance for this day
+                const dateKey = date.toDateString();
+                if (projectedBalances[dateKey] !== undefined) {
+                    const balanceEl = document.createElement('div');
+                    balanceEl.className = 'day-balance';
+                    const balance = projectedBalances[dateKey];
+                    
+                    // Add classes based on balance
+                    if (balance < 0) {
+                        balanceEl.classList.add('negative');
+                    } else if (balance < 100) {
+                        balanceEl.classList.add('low');
+                    }
+                    
+                    balanceEl.textContent = formatCurrency(balance);
+                    dayEl.appendChild(balanceEl);
+                }
+
+                // Add payments for this day
+                const dayPayments = payments.filter(p => p.day_of_month === date.getDate());
+                if (dayPayments.length > 0) {
+                    const paymentsDiv = document.createElement('div');
+                    paymentsDiv.className = 'day-payments';
+
+                    dayPayments.forEach(payment => {
+                        const badge = document.createElement('div');
+                        badge.className = 'day-payment-badge';
+                        badge.textContent = `${payment.name} - ${formatCurrency(payment.amount)}`;
+                        paymentsDiv.appendChild(badge);
+                    });
+
+                    dayEl.appendChild(paymentsDiv);
+                }
+
+                calendarContainer.appendChild(dayEl);
+                date.setDate(date.getDate() + 1);
+            }
+        }
+
+        // Update summary
+        function updateSummary() {
+            const total = payments.reduce((sum, p) => sum + p.amount, 0);
+            const monthlyTotal = payments.reduce((sum, p) => sum + p.amount, 0); // All are monthly
+            const count = payments.length;
+
+            document.getElementById('totalPayments').textContent = formatCurrency(total);
+            document.getElementById('monthlyTotal').textContent = formatCurrency(monthlyTotal);
+            document.getElementById('paymentCount').textContent = count;
+        }
+
+        // Render payments list
+        function renderPaymentsList() {
+            const container = document.getElementById('paymentsList');
+
+            if (payments.length === 0) {
+                container.innerHTML = '<div class="empty-list">No payments yet</div>';
+                return;
+            }
+
+            const sorted = [...payments].sort((a, b) => a.day_of_month - b.day_of_month);
+
+            container.innerHTML = sorted.map(payment => `
+                <div class="payment-item">
+                    <div class="payment-info">
+                        <div class="payment-name">${payment.name}</div>
+                        <div class="payment-meta">Day ${payment.day_of_month} • ${payment.category || 'Uncategorized'}</div>
+                    </div>
+                    <div class="payment-amount">${formatCurrency(payment.amount)}</div>
+                    <button type="button" class="payment-delete" onclick="deletePayment(${payment.id})">×</button>
+                </div>
+            `).join('');
+        }
+
+        // Add payment
+        async function addPayment(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('paymentName').value;
+            const amount = parseFloat(document.getElementById('paymentAmount').value);
+            const day = parseInt(document.getElementById('paymentDay').value);
+            const category = document.getElementById('paymentCategory').value;
+            const isRecurring = document.getElementById('paymentRecurring').value === 'true';
+
+            if (!name || !amount || !day || day < 1 || day > 31) {
+                showStatus('Please fill in all fields correctly', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/api/scheduled-payments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        amount,
+                        day_of_month: day,
+                        category: category || null,
+                        is_recurring: isRecurring
+                    })
+                });
+
+                if (response.ok) {
+                    showStatus('✅ Payment added!', 'success');
+                    document.getElementById('paymentForm').reset();
+                    loadPayments();
+                } else {
+                    const error = await response.json();
+                    showStatus(`Error: ${error.error || 'Failed to add payment'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Error adding payment:', error);
+                showStatus('Error adding payment', 'error');
+            }
+        }
+
+        // Delete payment
+        async function deletePayment(paymentId) {
+            if (!confirm('Delete this payment?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/scheduled-payments/${paymentId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showStatus('✅ Payment deleted!', 'success');
+                    loadPayments();
+                } else {
+                    showStatus('Error deleting payment', 'error');
+                }
+            } catch (error) {
+                console.error('Error deleting payment:', error);
+                showStatus('Error deleting payment', 'error');
+            }
+        }
+
+        // Calendar navigation
+        function previousMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        }
+
+        function today() {
+            currentDate = new Date();
+            renderCalendar();
+        }
+
+        // Load data on page load
+        (async function() {
+            await loadAccounts();
+            await loadPayments();
+        })();
+
+        // Refresh payments every minute
+        setInterval(loadPayments, 60 * 1000);
+    </script>
+</body>
+</html>
