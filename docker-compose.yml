@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -22,7 +20,9 @@ services:
       - teller-network
 
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: teller-home-app
     environment:
       DATABASE_URL: postgresql://teller:teller_dev_password@postgres:5432/teller_home
@@ -30,16 +30,19 @@ services:
       TELLER_APP_TOKEN: ${TELLER_APP_TOKEN}
       FLASK_ENV: production
       SECRET_KEY: ${SECRET_KEY:-change-this-secret-key-in-production}
+      PYTHONUNBUFFERED: "1"
     ports:
       - "5001:5001"
     volumes:
-      - ./authentication:/app/authentication:ro
+      - ./src:/app/src
+      - ./static:/app/static
+      - ./authentication:/app/authentication
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - teller-network
-    command: gunicorn --bind 0.0.0.0:5001 --workers 4 app:app
+    restart: unless-stopped
 
 volumes:
   postgres_data:

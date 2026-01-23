@@ -75,9 +75,9 @@ class Transaction(Base):
 
 
 class ScheduledPayment(Base):
-    """Represents a scheduled bill payment."""
+    """Represents a scheduled bill payment or subscription."""
     __tablename__ = "scheduled_payments"
-    
+
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
     amount = Column(Float, nullable=False)
@@ -85,13 +85,15 @@ class ScheduledPayment(Base):
     day_of_month = Column(Integer, nullable=False)  # 1-31
     is_active = Column(Boolean, default=True)
     is_recurring = Column(Boolean, default=True)  # True for monthly recurring, False for one-time
+    frequency = Column(String, default="monthly")  # monthly, yearly, one-time
+    email = Column(String, nullable=True)  # Email associated with subscription/service
     category = Column(String)
     notes = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     def __repr__(self):
-        return f"<ScheduledPayment(name={self.name}, amount={self.amount}, day={self.day_of_month})>"
+        return f"<ScheduledPayment(name={self.name}, amount={self.amount}, day={self.day_of_month}, frequency={self.frequency})>"
 
 
 class UserEnrollment(Base):

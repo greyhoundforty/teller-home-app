@@ -1,0 +1,7 @@
+name,email,amount,day_of_month,frequency,category
+Netflix,user@example.com,15.99,1,monthly,Entertainment
+Spotify,user@example.com,10.99,5,monthly,Entertainment
+Amazon Prime,user@example.com,139.00,15,yearly,Subscriptions
+Adobe Creative Cloud,work@example.com,54.99,20,monthly,Software
+Gym Membership,user@example.com,29.99,10,monthly,Healthcare
+Internet Service,user@example.com,79.99,25,monthly,Utilities

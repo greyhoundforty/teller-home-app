@@ -415,6 +415,12 @@
             border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
+        .status.warning {
+            background: rgba(251, 191, 36, 0.1);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
         .status.info {
             background: rgba(59, 130, 246, 0.1);
             color: #3b82f6;
@@ -566,6 +572,76 @@
 
                         <button type="submit" class="add-btn">Add Payment</button>
                     </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Import Subscriptions</div>
+                    <p style="color: #94a3b8; font-size: 13px; margin-bottom: 15px;">
+                        Upload a JSON, CSV, or Excel file with your subscriptions
+                    </p>
+                    <div id="importStatus" class="status"></div>
+
+                    <div class="form-group">
+                        <input type="file" id="subscriptionFile" accept=".json,.csv,.xlsx" style="margin-bottom: 10px;">
+                    </div>
+
+                    <button onclick="importSubscriptions()" class="add-btn" style="width: 100%;">
+                        Import File
+                    </button>
+
+                    <details style="margin-top: 15px; color: #94a3b8; font-size: 12px;">
+                        <summary style="cursor: pointer; margin-bottom: 10px;">File Format Examples</summary>
+
+                        <div style="margin-top: 10px;">
+                            <strong>JSON Format:</strong>
+                            <pre style="background: rgba(15, 23, 42, 0.8); padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 11px;">[
+  {
+    "name": "Netflix",
+    "email": "you@example.com",
+    "amount": 15.99,
+    "day_of_month": 1,
+    "frequency": "monthly"
+  },
+  {
+    "name": "Amazon Prime",
+    "email": "you@example.com",
+    "amount": 14.99,
+    "day_of_month": 15,
+    "frequency": "yearly"
+  }
+]</pre>
+                        </div>
+
+                        <div style="margin-top: 10px;">
+                            <strong>CSV Format:</strong>
+                            <pre style="background: rgba(15, 23, 42, 0.8); padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 11px;">name,email,amount,day_of_month,frequency
+Netflix,you@example.com,15.99,1,monthly
+Amazon Prime,you@example.com,14.99,15,yearly</pre>
+                        </div>
+
+                        <div style="margin-top: 10px;">
+                            <strong>Excel (.xlsx) Format:</strong>
+                            <p style="font-size: 11px; margin-top: 5px;">
+                                Create an Excel file with a header row and data rows:
+                            </p>
+                            <table style="font-size: 11px; border-collapse: collapse; width: 100%; margin-top: 5px;">
+                                <tr style="background: rgba(15, 23, 42, 0.8);">
+                                    <th style="border: 1px solid #475569; padding: 4px;">name</th>
+                                    <th style="border: 1px solid #475569; padding: 4px;">email</th>
+                                    <th style="border: 1px solid #475569; padding: 4px;">amount</th>
+                                    <th style="border: 1px solid #475569; padding: 4px;">day_of_month</th>
+                                    <th style="border: 1px solid #475569; padding: 4px;">frequency</th>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid #475569; padding: 4px;">Netflix</td>
+                                    <td style="border: 1px solid #475569; padding: 4px;">you@example.com</td>
+                                    <td style="border: 1px solid #475569; padding: 4px;">15.99</td>
+                                    <td style="border: 1px solid #475569; padding: 4px;">1</td>
+                                    <td style="border: 1px solid #475569; padding: 4px;">monthly</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </details>
                 </div>
 
                 <div class="card">
@@ -963,6 +1039,63 @@
         function today() {
             currentDate = new Date();
             renderCalendar();
+        }
+
+        // Import subscriptions from file
+        async function importSubscriptions() {
+            const fileInput = document.getElementById('subscriptionFile');
+            const statusEl = document.getElementById('importStatus');
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                statusEl.textContent = 'Please select a file to import';
+                statusEl.className = 'status error';
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                statusEl.textContent = 'Importing...';
+                statusEl.className = 'status';
+
+                const response = await fetch('/api/scheduled-payments/import', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok || response.status === 207) {
+                    const successMsg = `✓ Imported ${data.imported} subscription(s)`;
+                    const errorMsg = data.errors > 0 ? ` (${data.errors} error(s))` : '';
+
+                    statusEl.textContent = successMsg + errorMsg;
+                    statusEl.className = data.errors > 0 ? 'status warning' : 'status success';
+
+                    // Show details if there are errors
+                    if (data.errors > 0 && data.details.errors.length > 0) {
+                        console.error('Import errors:', data.details.errors);
+                    }
+
+                    // Clear file input and reload payments
+                    fileInput.value = '';
+                    await loadPayments();
+
+                    // Clear status after 5 seconds
+                    setTimeout(() => {
+                        statusEl.textContent = '';
+                        statusEl.className = 'status';
+                    }, 5000);
+                } else {
+                    throw new Error(data.message || 'Import failed');
+                }
+            } catch (error) {
+                statusEl.textContent = `✗ Import failed: ${error.message}`;
+                statusEl.className = 'status error';
+                console.error('Import error:', error);
+            }
         }
 
         // Load data on page load

@@ -22,6 +22,9 @@ apscheduler==3.10.4
 # Date/Time utilities
 python-dateutil==2.8.2
 
+# Excel file handling
+openpyxl==3.1.2
+
 # Testing
 pytest==7.4.3
 pytest-cov==4.1.0

@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Netflix",
+    "email": "user@example.com",
+    "amount": 15.99,
+    "day_of_month": 1,
+    "frequency": "monthly",
+    "category": "Entertainment"
+  },
+  {
+    "name": "Spotify",
+    "email": "user@example.com",
+    "amount": 10.99,
+    "day_of_month": 5,
+    "frequency": "monthly",
+    "category": "Entertainment"
+  },
+  {
+    "name": "Amazon Prime",
+    "email": "user@example.com",
+    "amount": 139.00,
+    "day_of_month": 15,
+    "frequency": "yearly",
+    "category": "Subscriptions"
+  },
+  {
+    "name": "Adobe Creative Cloud",
+    "email": "work@example.com",
+    "amount": 54.99,
+    "day_of_month": 20,
+    "frequency": "monthly",
+    "category": "Software"
+  },
+  {
+    "name": "Gym Membership",
+    "email": "user@example.com",
+    "amount": 29.99,
+    "day_of_month": 10,
+    "frequency": "monthly",
+    "category": "Healthcare"
+  },
+  {
+    "name": "Internet Service",
+    "email": "user@example.com",
+    "amount": 79.99,
+    "day_of_month": 25,
+    "frequency": "monthly",
+    "category": "Utilities"
+  }
+]

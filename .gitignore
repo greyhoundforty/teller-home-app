@@ -1,7 +1,7 @@
 *.agent-docs/*
 teller_home.db
 teller_home.db.*
-authorization/*
+authentication/
 
 ###------------------###
 ###  GitHub: Python  ###

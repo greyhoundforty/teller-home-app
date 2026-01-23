@@ -3,6 +3,9 @@ Main Flask application for Teller Home App.
 """
 import os
 import logging
+import json
+import csv
+import io
 from flask import Flask, jsonify, render_template, request
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -11,6 +14,7 @@ from src.models import init_database, get_session, Account, Balance, Transaction
 from src.sync_service import SyncService
 from datetime import datetime, timedelta
 from sqlalchemy import desc
+from openpyxl import load_workbook
 
 load_dotenv()
 
@@ -67,6 +71,7 @@ def api_info():
             "/api/accounts/<id>/transactions": "Get transactions for account",
             "/api/scheduled-payments": "Get/Create scheduled payments",
             "/api/scheduled-payments/<id>": "Delete scheduled payment",
+            "/api/scheduled-payments/import": "Import subscriptions from JSON/CSV file",
             "/api/weekly-forecast": "Get weekly financial forecast",
             "/api/teller-connect/enroll": "Enroll user with Teller Connect",
             "/api/teller-connect/status": "Get enrollment status",
@@ -104,24 +109,35 @@ def health():
 def sync_data():
     """Trigger a sync from Teller API."""
     session = get_session()
-    
+
     try:
-        client = TellerClient()
+        # Get the first active enrollment token
+        enrollment = session.query(UserEnrollment).filter_by(is_active=True).first()
+
+        if not enrollment:
+            return jsonify({
+                "status": "error",
+                "message": "No active enrollments found. Please connect a bank account first."
+            }), 400
+
+        # Use the enrollment's access token
+        client = TellerClient(app_token=enrollment.access_token)
         sync_service = SyncService(client, session)
         result = sync_service.sync_all()
-        
+
         return jsonify({
             "status": "success",
             "synced": result,
+            "enrollment_id": enrollment.enrollment_id,
             "timestamp": datetime.utcnow().isoformat()
         })
-    
+
     except Exception as e:
         return jsonify({
             "status": "error",
             "message": str(e)
         }), 500
-    
+
     finally:
         session.close()
 
@@ -273,7 +289,7 @@ def scheduled_payments():
     try:
         if request.method == 'GET':
             payments = session.query(ScheduledPayment).filter_by(is_active=True).all()
-            
+
             return jsonify({
                 "payments": [{
                     "id": payment.id,
@@ -281,29 +297,33 @@ def scheduled_payments():
                     "amount": payment.amount,
                     "account_id": payment.account_id,
                     "day_of_month": payment.day_of_month,
+                    "frequency": payment.frequency,
+                    "email": payment.email,
                     "category": payment.category,
                     "notes": payment.notes,
                     "is_recurring": payment.is_recurring
                 } for payment in payments],
                 "count": len(payments)
             })
-        
+
         else:  # POST
             data = request.json
-            
+
             payment = ScheduledPayment(
                 name=data['name'],
                 amount=float(data['amount']),
                 account_id=data.get('account_id'),
                 day_of_month=int(data['day_of_month']),
+                frequency=data.get('frequency', 'monthly'),
+                email=data.get('email'),
                 category=data.get('category'),
                 notes=data.get('notes'),
                 is_recurring=data.get('is_recurring', True)
             )
-            
+
             session.add(payment)
             session.commit()
-            
+
             return jsonify({
                 "status": "success",
                 "id": payment.id
@@ -337,6 +357,155 @@ def delete_scheduled_payment(payment_id):
         session.rollback()
         return jsonify({"error": str(e)}), 500
     
+    finally:
+        session.close()
+
+
+@app.route('/api/scheduled-payments/import', methods=['POST'])
+def import_scheduled_payments():
+    """
+    Import scheduled payments from JSON or CSV file.
+
+    Expected JSON format:
+    [
+        {
+            "name": "Netflix",
+            "email": "user@example.com",
+            "amount": 15.99,
+            "day_of_month": 1,
+            "frequency": "monthly"
+        }
+    ]
+
+    Expected CSV format (with header):
+    name,email,amount,day_of_month,frequency
+    Netflix,user@example.com,15.99,1,monthly
+    """
+    session = get_session()
+
+    try:
+        # Check if file upload or JSON body
+        if 'file' in request.files:
+            file = request.files['file']
+
+            if not file or file.filename == '':
+                return jsonify({"error": "No file provided"}), 400
+
+            filename = file.filename.lower()
+
+            # Parse based on file extension
+            if filename.endswith('.json'):
+                try:
+                    file_content = file.read().decode('utf-8')
+                    payments_data = json.loads(file_content)
+                except json.JSONDecodeError as e:
+                    return jsonify({"error": f"Invalid JSON format: {str(e)}"}), 400
+
+            elif filename.endswith('.csv'):
+                try:
+                    file_content = file.read().decode('utf-8')
+                    csv_reader = csv.DictReader(io.StringIO(file_content))
+                    payments_data = list(csv_reader)
+                except Exception as e:
+                    return jsonify({"error": f"Invalid CSV format: {str(e)}"}), 400
+
+            elif filename.endswith('.xlsx'):
+                try:
+                    # Load Excel file from bytes
+                    workbook = load_workbook(filename=io.BytesIO(file.read()), read_only=True)
+                    sheet = workbook.active
+
+                    # Get header row
+                    headers = [cell.value for cell in sheet[1]]
+
+                    # Parse rows into dictionaries
+                    payments_data = []
+                    for row in sheet.iter_rows(min_row=2, values_only=True):
+                        if any(row):  # Skip empty rows
+                            row_dict = {headers[i]: row[i] for i in range(len(headers)) if i < len(row)}
+                            payments_data.append(row_dict)
+
+                    workbook.close()
+                except Exception as e:
+                    return jsonify({"error": f"Invalid XLSX format: {str(e)}"}), 400
+
+            else:
+                return jsonify({"error": "File must be .json, .csv, or .xlsx"}), 400
+
+        elif request.json:
+            # Direct JSON body
+            payments_data = request.json
+            if not isinstance(payments_data, list):
+                payments_data = [payments_data]
+
+        else:
+            return jsonify({"error": "No file or JSON data provided"}), 400
+
+        # Validate and import payments
+        imported = []
+        errors = []
+
+        for idx, payment_data in enumerate(payments_data):
+            try:
+                # Validate required fields
+                required_fields = ['name', 'amount', 'day_of_month']
+                missing_fields = [f for f in required_fields if f not in payment_data or not payment_data[f]]
+
+                if missing_fields:
+                    errors.append({
+                        "row": idx + 1,
+                        "error": f"Missing required fields: {', '.join(missing_fields)}"
+                    })
+                    continue
+
+                # Create payment record
+                payment = ScheduledPayment(
+                    name=payment_data['name'],
+                    amount=float(payment_data['amount']),
+                    day_of_month=int(payment_data['day_of_month']),
+                    frequency=payment_data.get('frequency', 'monthly').lower(),
+                    email=payment_data.get('email'),
+                    category=payment_data.get('category', 'subscription'),
+                    notes=payment_data.get('notes'),
+                    is_recurring=True,  # Subscriptions are always recurring
+                    is_active=True
+                )
+
+                session.add(payment)
+                imported.append({
+                    "name": payment.name,
+                    "amount": payment.amount,
+                    "frequency": payment.frequency
+                })
+
+            except (ValueError, KeyError) as e:
+                errors.append({
+                    "row": idx + 1,
+                    "error": str(e),
+                    "data": payment_data
+                })
+
+        # Commit all successful imports
+        if imported:
+            session.commit()
+
+        return jsonify({
+            "status": "success" if not errors else "partial",
+            "imported": len(imported),
+            "errors": len(errors),
+            "details": {
+                "imported_payments": imported,
+                "errors": errors
+            }
+        }), 200 if not errors else 207
+
+    except Exception as e:
+        session.rollback()
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
     finally:
         session.close()
 
