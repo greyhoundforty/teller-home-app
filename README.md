@@ -44,6 +44,7 @@ open http://localhost:5001
 ### Core Pages
 - **Dashboard** - View all accounts with real-time balances, custom names for each account, and net worth calculation
 - **Calendar** - Schedule recurring or one-time payments, see projected balances for each day based on upcoming bills
+- **Transactions** - View, search, filter, and export your complete transaction history across all accounts
 - **Connect Bank** - Securely link additional bank accounts via Teller Connect
 
 ### Account Management
@@ -52,11 +53,76 @@ open http://localhost:5001
 - 📋 Switch between card and list view layouts
 - 🏦 Support for checking, savings, credit card, and money market accounts
 
+### Transaction Management
+- 💳 View all transactions across accounts in one unified view
+- 🔍 Search transactions by description with real-time filtering
+- 📅 Filter by date range, amount, and specific accounts
+- 📊 Sort by date, amount, or description (ascending/descending)
+- 📥 Export transactions to CSV or JSON format
+- 📱 Responsive design - table view on desktop, card view on mobile
+- 🔄 Automatic sync twice daily (6 AM and 6 PM)
+- 📈 View transaction statistics (total income, expenses, net flow)
+
 ### Payment Scheduling
 - 📅 Schedule bill payments on specific days of the month
-- 🔁 Mark payments as recurring (monthly) or one-time
+- 🔁 Mark payments as recurring (monthly, yearly) or one-time
 - 📊 See the impact on your balance for each day
 - ✅ Categorize payments by type (utilities, subscriptions, etc.)
+- 📥 **Import subscriptions** from JSON, CSV, or Excel files
+- 📧 Track subscription email addresses for easy account management
+
+## 📥 Importing Subscriptions
+
+Save time by importing your monthly/yearly subscriptions from a spreadsheet!
+
+### Supported Formats
+
+The app accepts **JSON**, **CSV**, and **Excel (.xlsx)** files with your subscription data.
+
+**Required fields:**
+- `name` - Service name (e.g., "Netflix")
+- `amount` - Monthly or yearly cost
+- `day_of_month` - Day the payment is due (1-31)
+
+**Optional fields:**
+- `email` - Account email address
+- `frequency` - "monthly" or "yearly" (defaults to monthly)
+- `category` - Subscription category
+
+### Example Files
+
+**CSV Format:**
+```csv
+name,email,amount,day_of_month,frequency,category
+Netflix,user@example.com,15.99,1,monthly,Entertainment
+Amazon Prime,user@example.com,139.00,15,yearly,Subscriptions
+```
+
+**JSON Format:**
+```json
+[
+  {
+    "name": "Netflix",
+    "email": "user@example.com",
+    "amount": 15.99,
+    "day_of_month": 1,
+    "frequency": "monthly",
+    "category": "Entertainment"
+  }
+]
+```
+
+**Excel Format:** Create a spreadsheet with headers in the first row (`name`, `email`, `amount`, `day_of_month`, `frequency`, `category`) and your data in subsequent rows.
+
+### How to Import
+
+1. Navigate to the **Calendar** page
+2. Find the **Import Subscriptions** card in the sidebar
+3. Click **Choose File** and select your JSON, CSV, or Excel file
+4. Click **Import File**
+5. Your subscriptions will appear on the calendar automatically
+
+The app validates all data and provides clear feedback about successful imports and any errors encountered.
 
 ## 🏗️ Tech Stack
 
@@ -66,6 +132,7 @@ open http://localhost:5001
 - **Frontend**: Vanilla JavaScript with responsive CSS
 - **Task Runner**: Mise
 - **Container**: Docker & Docker Compose
+- **Excel Support**: openpyxl for .xlsx file parsing
 
 ## 📁 Project Structure
 
@@ -80,8 +147,13 @@ teller-home-app/
 │   ├── index.html        # Home page
 │   ├── dashboard.html    # Account balances & overview
 │   ├── calendar.html     # Payment scheduling
+│   ├── transactions.html # Transaction history
 │   └── teller-connect.html # Bank linking
+├── deployment/
+│   ├── teller-sync.service # Systemd service for scheduled sync
+│   └── teller-sync.timer   # Systemd timer (twice daily)
 ├── tests/                # Test files and debug utilities
+├── scheduled_sync.py     # Scheduled transaction sync script
 ├── teller_home.db        # SQLite database
 └── mise.toml             # Task definitions
 ```
@@ -95,6 +167,12 @@ mise run db-reset     # Clear and reinitialize
 
 # Development
 mise run dev          # Start development server
+
+# Sync Operations
+mise run sync         # Manual sync from Teller API
+mise run sync-scheduled  # Run scheduled sync (for testing)
+mise run sync-setup   # Setup automatic twice-daily sync
+mise run sync-logs    # View scheduled sync logs
 
 # Testing & Quality
 mise run test         # Run test suite

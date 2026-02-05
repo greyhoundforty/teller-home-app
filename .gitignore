@@ -2,6 +2,8 @@
 teller_home.db
 teller_home.db.*
 authentication/
+.env.bak
+.env
 
 ###------------------###
 ###  GitHub: Python  ###

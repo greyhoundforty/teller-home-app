@@ -137,7 +137,19 @@ run = "source .venv/bin/activate && python -m src.sync_service"
 
 [tasks.auth-test]
 description = "Test Teller API authentication"
-run = "source .venv/bin/activate && python understand_teller_auth.py"
+
+[tasks.sync-scheduled]
+description = "Run scheduled transaction sync (for testing)"
+run = "source .venv/bin/activate && python scheduled_sync.py"
+
+[tasks.sync-setup]
+description = "Setup scheduled transaction sync (cron or systemd)"
+run = "bash setup-scheduled-sync.sh"
+
+[tasks.sync-logs]
+description = "View scheduled sync logs"
+run = "tail -f scheduled_sync.log"
+
 [tasks.backup-restart]
 description = "Stop the app, backup the database, and restart the app"
 run = [

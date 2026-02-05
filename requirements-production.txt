@@ -1,0 +1,28 @@
+# Production Requirements for SQLite Deployment
+# Use this for Proxmox/production deployments with SQLite
+
+# Web Framework
+flask==3.0.0
+flask-cors==4.0.0
+
+# HTTP Requests
+requests==2.31.0
+
+# Database (SQLite only - no PostgreSQL)
+sqlalchemy==2.0.23
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Date/Time utilities
+python-dateutil==2.8.2
+
+# Excel file handling (for subscription imports)
+openpyxl==3.1.2
+
+# WSGI Server
+gunicorn==21.2.0
+
+# TUI (Terminal User Interface)
+textual>=0.60.0
+rich>=13.0.0

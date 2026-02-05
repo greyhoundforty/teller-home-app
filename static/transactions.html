@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transactions - Teller Home App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-left h1 {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-left p {
+            color: #94a3b8;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            border: 1px solid #475569;
+            background: rgba(30, 41, 59, 0.8);
+            color: #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-btn:hover {
+            background: rgba(71, 85, 105, 0.8);
+            border-color: #64748b;
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            border-color: transparent;
+            color: white;
+        }
+
+        .sync-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sync-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        }
+
+        .sync-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #475569;
+            border-radius: 12px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-label {
+            color: #94a3b8;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .stat-value.positive {
+            color: #10b981;
+        }
+
+        .stat-value.negative {
+            color: #ef4444;
+        }
+
+        .filters-panel {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #475569;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .filters-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #f1f5f9;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .filter-input, .filter-select {
+            padding: 10px 12px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid #475569;
+            border-radius: 8px;
+            color: #e2e8f0;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .filter-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(96, 165, 250, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(71, 85, 105, 0.8);
+            color: #e2e8f0;
+            border: 1px solid #475569;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(100, 116, 139, 0.8);
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .btn-export:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
+        }
+
+        .transactions-container {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #475569;
+            border-radius: 12px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 24px;
+        }
+
+        .transactions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .transactions-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .sort-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .sort-label {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .transactions-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .transactions-table thead {
+            background: rgba(15, 23, 42, 0.6);
+        }
+
+        .transactions-table th {
+            padding: 12px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .transactions-table td {
+            padding: 16px 12px;
+            border-top: 1px solid #334155;
+            font-size: 14px;
+        }
+
+        .transactions-table tbody tr {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .transactions-table tbody tr:hover {
+            background: rgba(71, 85, 105, 0.3);
+        }
+
+        .amount-positive {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .amount-negative {
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        .transaction-date {
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        .transaction-description {
+            color: #f1f5f9;
+            font-weight: 500;
+        }
+
+        .transaction-account {
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .pagination-info {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .page-btn {
+            padding: 8px 12px;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid #475569;
+            border-radius: 6px;
+            color: #e2e8f0;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: rgba(71, 85, 105, 0.8);
+            border-color: #64748b;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .page-btn.active {
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            border-color: transparent;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #f1f5f9;
+            margin-bottom: 8px;
+        }
+
+        .empty-state-text {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
+            border: 1px solid #475569;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: rgba(71, 85, 105, 0.8);
+            border: none;
+            border-radius: 8px;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            color: #e2e8f0;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(100, 116, 139, 0.8);
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #334155;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: #94a3b8;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            color: #f1f5f9;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .transactions-table {
+                display: none;
+            }
+
+            .transaction-card {
+                background: rgba(15, 23, 42, 0.6);
+                border: 1px solid #334155;
+                border-radius: 12px;
+                padding: 16px;
+                margin-bottom: 12px;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+
+            .transaction-card:hover {
+                background: rgba(71, 85, 105, 0.3);
+                border-color: #475569;
+            }
+
+            .transaction-card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: start;
+                margin-bottom: 12px;
+            }
+
+            .transaction-card-amount {
+                font-size: 20px;
+                font-weight: 700;
+            }
+
+            .transaction-card-date {
+                color: #94a3b8;
+                font-size: 12px;
+            }
+
+            .transaction-card-description {
+                color: #f1f5f9;
+                font-weight: 500;
+                margin-bottom: 8px;
+            }
+
+            .transaction-card-account {
+                color: #94a3b8;
+                font-size: 13px;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .transaction-cards {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-left">
+                <h1>💳 Transactions</h1>
+                <p>View and manage your transaction history</p>
+            </div>
+            <div class="header-actions">
+                <a href="/" class="nav-btn">🏠 Home</a>
+                <a href="/static/dashboard.html" class="nav-btn">📊 Dashboard</a>
+                <a href="/static/calendar.html" class="nav-btn">📅 Calendar</a>
+                <a href="/static/transactions.html" class="nav-btn active">💳 Transactions</a>
+                <a href="/static/teller-connect.html" class="nav-btn">🔗 Connect Bank</a>
+                <button class="sync-btn" onclick="syncData()">
+                    <span id="syncIcon">🔄</span>
+                    <span id="syncText">Sync Now</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Row -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-label">Total Transactions</div>
+                <div class="stat-value" id="totalTransactions">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Income</div>
+                <div class="stat-value positive" id="totalIncome">$0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Expenses</div>
+                <div class="stat-value negative" id="totalExpenses">$0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Net Flow</div>
+                <div class="stat-value" id="netFlow">$0.00</div>
+            </div>
+        </div>
+
+        <!-- Filters Panel -->
+        <div class="filters-panel">
+            <div class="filters-title">🔍 Filters</div>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label class="filter-label">Account</label>
+                    <select class="filter-select" id="filterAccount">
+                        <option value="">All Accounts</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Start Date</label>
+                    <input type="date" class="filter-input" id="filterStartDate">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">End Date</label>
+                    <input type="date" class="filter-input" id="filterEndDate">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Min Amount</label>
+                    <input type="number" class="filter-input" id="filterMinAmount" placeholder="0.00" step="0.01">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Max Amount</label>
+                    <input type="number" class="filter-input" id="filterMaxAmount" placeholder="0.00" step="0.01">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Search Description</label>
+                    <input type="text" class="filter-input" id="filterSearch" placeholder="Search...">
+                </div>
+            </div>
+            <div class="filter-actions">
+                <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+                <button class="btn btn-secondary" onclick="clearFilters()">Clear Filters</button>
+                <button class="btn btn-export" onclick="exportTransactions('csv')">📥 Export CSV</button>
+                <button class="btn btn-export" onclick="exportTransactions('json')">📥 Export JSON</button>
+            </div>
+        </div>
+
+        <!-- Transactions Container -->
+        <div class="transactions-container">
+            <div class="transactions-header">
+                <div class="transactions-title">Transaction History</div>
+                <div class="sort-controls">
+                    <span class="sort-label">Sort by:</span>
+                    <select class="filter-select" id="sortBy" onchange="applyFilters()">
+                        <option value="date">Date</option>
+                        <option value="amount">Amount</option>
+                        <option value="description">Description</option>
+                    </select>
+                    <select class="filter-select" id="sortOrder" onchange="applyFilters()">
+                        <option value="desc">Newest First</option>
+                        <option value="asc">Oldest First</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="loading">
+                <div class="spinner" style="width: 40px; height: 40px; border-width: 4px; margin: 0 auto 16px;"></div>
+                <div>Loading transactions...</div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div class="empty-state-icon">💳</div>
+                <div class="empty-state-title">No Transactions Found</div>
+                <div class="empty-state-text">Try adjusting your filters or sync your accounts to fetch new transactions.</div>
+            </div>
+
+            <!-- Desktop Table View -->
+            <table class="transactions-table" id="transactionsTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Account</th>
+                        <th>Category</th>
+                        <th style="text-align: right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionsTableBody">
+                </tbody>
+            </table>
+
+            <!-- Mobile Card View -->
+            <div class="transaction-cards" id="transactionCards">
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination" id="paginationContainer" style="display: none;">
+                <div class="pagination-info" id="paginationInfo"></div>
+                <div class="pagination-controls" id="paginationControls"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction Detail Modal -->
+    <div class="modal" id="transactionModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">×</button>
+            <div class="modal-title">Transaction Details</div>
+            <div id="transactionDetails"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let currentFilters = {};
+        let allAccounts = [];
+
+        // Load accounts for filter dropdown
+        async function loadAccounts() {
+            try {
+                const response = await fetch('/api/accounts');
+                const data = await response.json();
+                allAccounts = data.accounts;
+
+                const select = document.getElementById('filterAccount');
+                allAccounts.forEach(account => {
+                    const option = document.createElement('option');
+                    option.value = account.id;
+                    option.textContent = account.display_name || account.name;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading accounts:', error);
+            }
+        }
+
+        // Load transactions with filters
+        async function loadTransactions(page = 1) {
+            try {
+                document.getElementById('loadingState').style.display = 'block';
+                document.getElementById('emptyState').style.display = 'none';
+                document.getElementById('transactionsTable').style.display = 'none';
+                document.getElementById('transactionCards').innerHTML = '';
+                document.getElementById('paginationContainer').style.display = 'none';
+
+                const params = new URLSearchParams({
+                    page: page,
+                    per_page: 50,
+                    sort_by: document.getElementById('sortBy').value,
+                    sort_order: document.getElementById('sortOrder').value
+                });
+
+                // Add filters
+                if (currentFilters.account_id) params.append('account_id', currentFilters.account_id);
+                if (currentFilters.start_date) params.append('start_date', currentFilters.start_date);
+                if (currentFilters.end_date) params.append('end_date', currentFilters.end_date);
+                if (currentFilters.min_amount) params.append('min_amount', currentFilters.min_amount);
+                if (currentFilters.max_amount) params.append('max_amount', currentFilters.max_amount);
+                if (currentFilters.search) params.append('search', currentFilters.search);
+
+                const response = await fetch(`/api/transactions?${params}`);
+                const data = await response.json();
+
+                document.getElementById('loadingState').style.display = 'none';
+
+                if (data.transactions.length === 0) {
+                    document.getElementById('emptyState').style.display = 'block';
+                    updateStats([], data.pagination.total);
+                    return;
+                }
+
+                renderTransactions(data.transactions);
+                renderPagination(data.pagination);
+                updateStats(data.transactions, data.pagination.total);
+
+                document.getElementById('transactionsTable').style.display = 'table';
+                document.getElementById('paginationContainer').style.display = 'flex';
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('emptyState').style.display = 'block';
+            }
+        }
+
+        // Render transactions in table
+        function renderTransactions(transactions) {
+            const tbody = document.getElementById('transactionsTableBody');
+            const cards = document.getElementById('transactionCards');
+            tbody.innerHTML = '';
+            cards.innerHTML = '';
+
+            transactions.forEach(txn => {
+                // Table row
+                const row = document.createElement('tr');
+                row.onclick = () => showTransactionDetail(txn);
+                
+                const date = new Date(txn.date);
+                const amountClass = txn.amount >= 0 ? 'amount-positive' : 'amount-negative';
+                const amountSign = txn.amount >= 0 ? '+' : '';
+                
+                row.innerHTML = `
+                    <td><span class="transaction-date">${date.toLocaleDateString()}</span></td>
+                    <td><span class="transaction-description">${txn.description}</span></td>
+                    <td><span class="transaction-account">${txn.account_name}</span></td>
+                    <td><span class="transaction-account">${txn.category || '-'}</span></td>
+                    <td style="text-align: right;"><span class="${amountClass}">${amountSign}$${Math.abs(txn.amount).toFixed(2)}</span></td>
+                `;
+                tbody.appendChild(row);
+
+                // Mobile card
+                const card = document.createElement('div');
+                card.className = 'transaction-card';
+                card.onclick = () => showTransactionDetail(txn);
+                card.innerHTML = `
+                    <div class="transaction-card-header">
+                        <div>
+                            <div class="transaction-card-date">${date.toLocaleDateString()}</div>
+                            <div class="transaction-card-description">${txn.description}</div>
+                        </div>
+                        <div class="transaction-card-amount ${amountClass}">${amountSign}$${Math.abs(txn.amount).toFixed(2)}</div>
+                    </div>
+                    <div class="transaction-card-account">${txn.account_name}</div>
+                `;
+                cards.appendChild(card);
+            });
+        }
+
+        // Render pagination controls
+        function renderPagination(pagination) {
+            const info = document.getElementById('paginationInfo');
+            const controls = document.getElementById('paginationControls');
+
+            const start = (pagination.page - 1) * pagination.per_page + 1;
+            const end = Math.min(pagination.page * pagination.per_page, pagination.total);
+            info.textContent = `Showing ${start}-${end} of ${pagination.total} transactions`;
+
+            controls.innerHTML = '';
+
+            // Previous button
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'page-btn';
+            prevBtn.textContent = '← Previous';
+            prevBtn.disabled = pagination.page === 1;
+            prevBtn.onclick = () => {
+                currentPage = pagination.page - 1;
+                loadTransactions(currentPage);
+            };
+            controls.appendChild(prevBtn);
+
+            // Page numbers
+            const maxPages = 5;
+            let startPage = Math.max(1, pagination.page - Math.floor(maxPages / 2));
+            let endPage = Math.min(pagination.pages, startPage + maxPages - 1);
+            
+            if (endPage - startPage < maxPages - 1) {
+                startPage = Math.max(1, endPage - maxPages + 1);
+            }
+
+            if (startPage > 1) {
+                const btn = document.createElement('button');
+                btn.className = 'page-btn';
+                btn.textContent = '1';
+                btn.onclick = () => {
+                    currentPage = 1;
+                    loadTransactions(currentPage);
+                };
+                controls.appendChild(btn);
+
+                if (startPage > 2) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.textContent = '...';
+                    ellipsis.style.padding = '0 8px';
+                    ellipsis.style.color = '#94a3b8';
+                    controls.appendChild(ellipsis);
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'page-btn';
+                if (i === pagination.page) btn.classList.add('active');
+                btn.textContent = i;
+                btn.onclick = () => {
+                    currentPage = i;
+                    loadTransactions(currentPage);
+                };
+                controls.appendChild(btn);
+            }
+
+            if (endPage < pagination.pages) {
+                if (endPage < pagination.pages - 1) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.textContent = '...';
+                    ellipsis.style.padding = '0 8px';
+                    ellipsis.style.color = '#94a3b8';
+                    controls.appendChild(ellipsis);
+                }
+
+                const btn = document.createElement('button');
+                btn.className = 'page-btn';
+                btn.textContent = pagination.pages;
+                btn.onclick = () => {
+                    currentPage = pagination.pages;
+                    loadTransactions(currentPage);
+                };
+                controls.appendChild(btn);
+            }
+
+            // Next button
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'page-btn';
+            nextBtn.textContent = 'Next →';
+            nextBtn.disabled = pagination.page === pagination.pages;
+            nextBtn.onclick = () => {
+                currentPage = pagination.page + 1;
+                loadTransactions(currentPage);
+            };
+            controls.appendChild(nextBtn);
+        }
+
+        // Update stats
+        function updateStats(transactions, total) {
+            document.getElementById('totalTransactions').textContent = total;
+
+            let income = 0;
+            let expenses = 0;
+
+            transactions.forEach(txn => {
+                if (txn.amount > 0) {
+                    income += txn.amount;
+                } else {
+                    expenses += Math.abs(txn.amount);
+                }
+            });
+
+            const netFlow = income - expenses;
+
+            document.getElementById('totalIncome').textContent = `$${income.toFixed(2)}`;
+            document.getElementById('totalExpenses').textContent = `$${expenses.toFixed(2)}`;
+            
+            const netFlowEl = document.getElementById('netFlow');
+            netFlowEl.textContent = `$${Math.abs(netFlow).toFixed(2)}`;
+            netFlowEl.className = 'stat-value';
+            if (netFlow > 0) netFlowEl.classList.add('positive');
+            else if (netFlow < 0) netFlowEl.classList.add('negative');
+        }
+
+        // Apply filters
+        function applyFilters() {
+            currentFilters = {
+                account_id: document.getElementById('filterAccount').value,
+                start_date: document.getElementById('filterStartDate').value,
+                end_date: document.getElementById('filterEndDate').value,
+                min_amount: document.getElementById('filterMinAmount').value,
+                max_amount: document.getElementById('filterMaxAmount').value,
+                search: document.getElementById('filterSearch').value
+            };
+
+            // Remove empty filters
+            Object.keys(currentFilters).forEach(key => {
+                if (!currentFilters[key]) delete currentFilters[key];
+            });
+
+            currentPage = 1;
+            loadTransactions(currentPage);
+        }
+
+        // Clear filters
+        function clearFilters() {
+            document.getElementById('filterAccount').value = '';
+            document.getElementById('filterStartDate').value = '';
+            document.getElementById('filterEndDate').value = '';
+            document.getElementById('filterMinAmount').value = '';
+            document.getElementById('filterMaxAmount').value = '';
+            document.getElementById('filterSearch').value = '';
+            document.getElementById('sortBy').value = 'date';
+            document.getElementById('sortOrder').value = 'desc';
+            
+            currentFilters = {};
+            currentPage = 1;
+            loadTransactions(currentPage);
+        }
+
+        // Show transaction detail modal
+        function showTransactionDetail(txn) {
+            const modal = document.getElementById('transactionModal');
+            const details = document.getElementById('transactionDetails');
+            
+            const date = new Date(txn.date);
+            const amountClass = txn.amount >= 0 ? 'amount-positive' : 'amount-negative';
+            const amountSign = txn.amount >= 0 ? '+' : '';
+            
+            details.innerHTML = `
+                <div class="detail-row">
+                    <span class="detail-label">Date</span>
+                    <span class="detail-value">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Description</span>
+                    <span class="detail-value">${txn.description}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Account</span>
+                    <span class="detail-value">${txn.account_name}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Amount</span>
+                    <span class="detail-value ${amountClass}">${amountSign}$${Math.abs(txn.amount).toFixed(2)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Category</span>
+                    <span class="detail-value">${txn.category || 'Uncategorized'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Type</span>
+                    <span class="detail-value">${txn.type || '-'}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Status</span>
+                    <span class="detail-value">${txn.status}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Transaction ID</span>
+                    <span class="detail-value" style="font-size: 11px; word-break: break-all;">${txn.id}</span>
+                </div>
+            `;
+            
+            modal.classList.add('active');
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('transactionModal').classList.remove('active');
+        }
+
+        // Close modal on backdrop click
+        document.getElementById('transactionModal').addEventListener('click', (e) => {
+            if (e.target.id === 'transactionModal') {
+                closeModal();
+            }
+        });
+
+        // Export transactions
+        function exportTransactions(format) {
+            const params = new URLSearchParams({
+                format: format,
+                sort_by: document.getElementById('sortBy').value,
+                sort_order: document.getElementById('sortOrder').value
+            });
+
+            // Add filters
+            if (currentFilters.account_id) params.append('account_id', currentFilters.account_id);
+            if (currentFilters.start_date) params.append('start_date', currentFilters.start_date);
+            if (currentFilters.end_date) params.append('end_date', currentFilters.end_date);
+            if (currentFilters.min_amount) params.append('min_amount', currentFilters.min_amount);
+            if (currentFilters.max_amount) params.append('max_amount', currentFilters.max_amount);
+            if (currentFilters.search) params.append('search', currentFilters.search);
+
+            window.location.href = `/api/transactions/export?${params}`;
+        }
+
+        // Sync data
+        async function syncData() {
+            const btn = document.querySelector('.sync-btn');
+            const icon = document.getElementById('syncIcon');
+            const text = document.getElementById('syncText');
+            
+            btn.disabled = true;
+            icon.innerHTML = '<span class="spinner"></span>';
+            text.textContent = 'Syncing...';
+
+            try {
+                const response = await fetch('/api/sync', { method: 'POST' });
+                const data = await response.json();
+
+                if (data.status === 'success') {
+                    text.textContent = 'Synced!';
+                    setTimeout(() => {
+                        icon.textContent = '🔄';
+                        text.textContent = 'Sync Now';
+                        btn.disabled = false;
+                        loadTransactions(currentPage);
+                    }, 1500);
+                } else {
+                    throw new Error(data.message || 'Sync failed');
+                }
+            } catch (error) {
+                console.error('Sync error:', error);
+                icon.textContent = '❌';
+                text.textContent = 'Sync Failed';
+                setTimeout(() => {
+                    icon.textContent = '🔄';
+                    text.textContent = 'Sync Now';
+                    btn.disabled = false;
+                }, 2000);
+            }
+        }
+
+        // Debounce search input
+        let searchTimeout;
+        document.getElementById('filterSearch').addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                applyFilters();
+            }, 500);
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAccounts();
+            loadTransactions(1);
+        });
+    </script>
+</body>
+</html>

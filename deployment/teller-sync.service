@@ -1,0 +1,17 @@
+[Unit]
+Description=Teller Transaction Sync Service
+After=network.target
+
+[Service]
+Type=oneshot
+User=teller
+Group=teller
+WorkingDirectory=/opt/teller-home-app
+Environment="PATH=/opt/teller-home-app/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/opt/teller-home-app/.venv/bin/python3 /opt/teller-home-app/scheduled_sync.py
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=teller-sync
+
+[Install]
+WantedBy=multi-user.target

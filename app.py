@@ -62,6 +62,7 @@ def api_info():
             "/": "Home page with navigation",
             "/static/dashboard.html": "Dashboard with account cards",
             "/static/calendar.html": "Calendar for payment scheduling",
+            "/static/transactions.html": "Transaction history and management",
             "/static/teller-connect.html": "Bank account connection UI",
             "/api/health": "Health check",
             "/api/sync": "Sync data from Teller",
@@ -69,6 +70,8 @@ def api_info():
             "/api/accounts/<id>": "Get specific account",
             "/api/accounts/<id>/balance": "Get current balance for account",
             "/api/accounts/<id>/transactions": "Get transactions for account",
+            "/api/transactions": "Get all transactions with filtering, sorting, pagination",
+            "/api/transactions/export": "Export transactions to CSV or JSON",
             "/api/scheduled-payments": "Get/Create scheduled payments",
             "/api/scheduled-payments/<id>": "Delete scheduled payment",
             "/api/scheduled-payments/import": "Import subscriptions from JSON/CSV file",
@@ -278,6 +281,264 @@ def get_transactions(account_id):
         } for txn in transactions])
     
     finally:
+
+
+@app.route('/api/transactions')
+def get_all_transactions():
+    """
+    Get all transactions with filtering, sorting, and pagination.
+    
+    Query Parameters:
+        account_id: Filter by specific account
+        start_date: Filter transactions after date (ISO format)
+        end_date: Filter transactions before date (ISO format)
+        min_amount: Minimum transaction amount
+        max_amount: Maximum transaction amount
+        search: Search in description field
+        sort_by: Sort field (date, amount, description) - default: date
+        sort_order: asc or desc - default: desc
+        page: Page number - default: 1
+        per_page: Items per page - default: 50, max: 200
+    """
+    session = get_session()
+    
+    try:
+        # Get query parameters
+        account_id = request.args.get('account_id')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        min_amount = request.args.get('min_amount', type=float)
+        max_amount = request.args.get('max_amount', type=float)
+        search = request.args.get('search', '').strip()
+        sort_by = request.args.get('sort_by', 'date')
+        sort_order = request.args.get('sort_order', 'desc')
+        page = request.args.get('page', 1, type=int)
+        per_page = min(request.args.get('per_page', 50, type=int), 200)
+        
+        # Build query
+        query = session.query(Transaction)
+        
+        # Apply filters
+        if account_id:
+            query = query.filter(Transaction.account_id == account_id)
+        
+        if start_date:
+            try:
+                start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+                query = query.filter(Transaction.date >= start_dt)
+            except ValueError:
+                pass
+        
+        if end_date:
+            try:
+                end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+                query = query.filter(Transaction.date <= end_dt)
+            except ValueError:
+                pass
+        
+        if min_amount is not None:
+            query = query.filter(Transaction.amount >= min_amount)
+        
+        if max_amount is not None:
+            query = query.filter(Transaction.amount <= max_amount)
+        
+        if search:
+            query = query.filter(Transaction.description.ilike(f'%{search}%'))
+        
+        # Apply sorting
+        sort_column = Transaction.date
+        if sort_by == 'amount':
+            sort_column = Transaction.amount
+        elif sort_by == 'description':
+            sort_column = Transaction.description
+        
+        if sort_order == 'asc':
+            query = query.order_by(sort_column.asc())
+        else:
+            query = query.order_by(sort_column.desc())
+        
+        # Get total count before pagination
+        total_count = query.count()
+        
+        # Apply pagination
+        offset = (page - 1) * per_page
+        transactions = query.offset(offset).limit(per_page).all()
+        
+        # Get account names for display
+        account_names = {}
+        for txn in transactions:
+            if txn.account_id not in account_names:
+                account = session.query(Account).filter_by(id=txn.account_id).first()
+                if account:
+                    account_names[txn.account_id] = account.display_name or account.name
+        
+        # Format response
+        transactions_data = [{
+            "id": txn.id,
+            "account_id": txn.account_id,
+            "account_name": account_names.get(txn.account_id, 'Unknown'),
+            "amount": txn.amount,
+            "date": txn.date.isoformat(),
+            "description": txn.description,
+            "category": txn.category,
+            "type": txn.type,
+            "status": txn.status
+        } for txn in transactions]
+        
+        # Calculate pagination info
+        total_pages = (total_count + per_page - 1) // per_page
+        
+        return jsonify({
+            "transactions": transactions_data,
+            "pagination": {
+                "page": page,
+                "per_page": per_page,
+                "total": total_count,
+                "pages": total_pages
+            },
+            "filters_applied": {
+                "account_id": account_id,
+                "start_date": start_date,
+                "end_date": end_date,
+                "min_amount": min_amount,
+                "max_amount": max_amount,
+                "search": search,
+                "sort_by": sort_by,
+                "sort_order": sort_order
+            }
+        })
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+    finally:
+        session.close()
+
+
+@app.route('/api/transactions/export')
+def export_transactions():
+    """
+    Export transactions to CSV or JSON format.
+    Accepts same query parameters as /api/transactions.
+    """
+    session = get_session()
+    
+    try:
+        export_format = request.args.get('format', 'csv').lower()
+        
+        # Get query parameters (same as get_all_transactions)
+        account_id = request.args.get('account_id')
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        min_amount = request.args.get('min_amount', type=float)
+        max_amount = request.args.get('max_amount', type=float)
+        search = request.args.get('search', '').strip()
+        sort_by = request.args.get('sort_by', 'date')
+        sort_order = request.args.get('sort_order', 'desc')
+        
+        # Build query (same logic as get_all_transactions)
+        query = session.query(Transaction)
+        
+        if account_id:
+            query = query.filter(Transaction.account_id == account_id)
+        
+        if start_date:
+            try:
+                start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+                query = query.filter(Transaction.date >= start_dt)
+            except ValueError:
+                pass
+        
+        if end_date:
+            try:
+                end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+                query = query.filter(Transaction.date <= end_dt)
+            except ValueError:
+                pass
+        
+        if min_amount is not None:
+            query = query.filter(Transaction.amount >= min_amount)
+        
+        if max_amount is not None:
+            query = query.filter(Transaction.amount <= max_amount)
+        
+        if search:
+            query = query.filter(Transaction.description.ilike(f'%{search}%'))
+        
+        # Apply sorting
+        sort_column = Transaction.date
+        if sort_by == 'amount':
+            sort_column = Transaction.amount
+        elif sort_by == 'description':
+            sort_column = Transaction.description
+        
+        if sort_order == 'asc':
+            query = query.order_by(sort_column.asc())
+        else:
+            query = query.order_by(sort_column.desc())
+        
+        # Get all transactions (no pagination for export)
+        transactions = query.all()
+        
+        # Get account names
+        account_names = {}
+        for txn in transactions:
+            if txn.account_id not in account_names:
+                account = session.query(Account).filter_by(id=txn.account_id).first()
+                if account:
+                    account_names[txn.account_id] = account.display_name or account.name
+        
+        if export_format == 'json':
+            # Export as JSON
+            transactions_data = [{
+                "id": txn.id,
+                "account_id": txn.account_id,
+                "account_name": account_names.get(txn.account_id, 'Unknown'),
+                "amount": txn.amount,
+                "date": txn.date.isoformat(),
+                "description": txn.description,
+                "category": txn.category,
+                "type": txn.type,
+                "status": txn.status
+            } for txn in transactions]
+            
+            response = jsonify(transactions_data)
+            response.headers['Content-Disposition'] = f'attachment; filename=transactions_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
+            return response
+        
+        else:
+            # Export as CSV
+            output = io.StringIO()
+            writer = csv.writer(output)
+            
+            # Write header
+            writer.writerow(['Date', 'Account', 'Description', 'Amount', 'Category', 'Type', 'Status'])
+            
+            # Write data
+            for txn in transactions:
+                writer.writerow([
+                    txn.date.strftime('%Y-%m-%d %H:%M:%S'),
+                    account_names.get(txn.account_id, 'Unknown'),
+                    txn.description,
+                    txn.amount,
+                    txn.category or '',
+                    txn.type or '',
+                    txn.status
+                ])
+            
+            output.seek(0)
+            response = app.response_class(
+                output.getvalue(),
+                mimetype='text/csv',
+                headers={'Content-Disposition': f'attachment; filename=transactions_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'}
+            )
+            return response
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+    finally:
+        session.close()
         session.close()
 
 
