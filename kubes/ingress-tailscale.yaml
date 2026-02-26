@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: teller-home-tailscale
+  namespace: teller-home
+  annotations:
+    # Do NOT add tailscale.com/funnel: "true" here — that would expose the
+    # service on the public internet. Without that annotation the service is
+    # reachable only by devices on your tailnet.
+spec:
+  ingressClassName: tailscale
+  rules:
+    # The host value becomes the machine name on your tailnet.
+    # The full hostname will be: teller-home.<tailnet-name>.ts.net
+    # You can change "teller-home" to any name you like.
+    - host: teller-home
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: teller-home-app
+                port:
+                  number: 5001
+  tls:
+    - hosts:
+        - teller-home
+      # Tailscale provisions HTTPS certificates automatically for tailnet
+      # hostnames — no cert-manager or manual cert needed.
