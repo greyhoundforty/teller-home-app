@@ -2,6 +2,10 @@
 fnox = "latest"
 python = "3.12"
 
+[env]
+_.python.venv = { path = ".venv", create = true }
+PROJECT_NAME = "{{ config_root | basename }}"
+
 [tasks.setup]
 description = "Initial project setup - create venv and install dependencies"
 run = [

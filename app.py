@@ -110,28 +110,39 @@ def health():
 
 @app.route('/api/sync', methods=['POST'])
 def sync_data():
-    """Trigger a sync from Teller API."""
+    """Trigger a sync from Teller API across all active enrollments."""
     session = get_session()
 
     try:
-        # Get the first active enrollment token
-        enrollment = session.query(UserEnrollment).filter_by(is_active=True).first()
+        enrollments = session.query(UserEnrollment).filter_by(is_active=True).all()
 
-        if not enrollment:
+        if not enrollments:
             return jsonify({
                 "status": "error",
                 "message": "No active enrollments found. Please connect a bank account first."
             }), 400
 
-        # Use the enrollment's access token
-        client = TellerClient(app_token=enrollment.access_token)
-        sync_service = SyncService(client, session)
-        result = sync_service.sync_all()
+        totals = {"accounts": 0, "balances": 0, "transactions": 0}
+        synced_enrollments = []
+
+        for enrollment in enrollments:
+            try:
+                client = TellerClient(app_token=enrollment.access_token)
+                sync_service = SyncService(client, session)
+                result = sync_service.sync_all()
+                enrollment.last_synced = datetime.utcnow()
+                for k in totals:
+                    totals[k] += result.get(k, 0)
+                synced_enrollments.append(enrollment.enrollment_id)
+            except Exception as e:
+                logger.warning(f"Sync failed for enrollment {enrollment.enrollment_id}: {e}")
+
+        session.commit()
 
         return jsonify({
             "status": "success",
-            "synced": result,
-            "enrollment_id": enrollment.enrollment_id,
+            "synced": totals,
+            "enrollments": synced_enrollments,
             "timestamp": datetime.utcnow().isoformat()
         })
 
@@ -958,6 +969,14 @@ def enroll_teller():
                 existing.institution_name = data['institution_name']
             enrollment = existing
         else:
+            # Deactivate any existing enrollments for the same institution
+            # so re-enrolling replaces rather than stacks
+            institution = data.get('institution_name')
+            if institution:
+                session.query(UserEnrollment).filter_by(
+                    institution_name=institution, is_active=True
+                ).update({"is_active": False, "updated_at": datetime.utcnow()})
+
             # Create new enrollment
             enrollment = UserEnrollment(
                 enrollment_id=data['enrollment_id'],

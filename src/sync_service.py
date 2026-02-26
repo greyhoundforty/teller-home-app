@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from .teller_client import TellerClient
 from .models import Account, Balance, Transaction, get_session
 import logging
+import time
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -92,6 +93,7 @@ class SyncService:
             count = 0
 
             for account in accounts:
+                time.sleep(0.5)
                 try:
                     balance_data = self.teller_client.get_account_balances(account.id)
 
@@ -138,6 +140,7 @@ class SyncService:
             count = 0
 
             for account in accounts:
+                time.sleep(0.5)
                 try:
                     transactions_data = self.teller_client.get_transactions(
                         account.id,
