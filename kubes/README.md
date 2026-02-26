@@ -135,6 +135,65 @@ kubectl port-forward -n teller-home svc/teller-home-app 5001:5001
 
 ---
 
+## Exposing via Tailscale (tailnet-only access)
+
+The `ingress-tailscale.yaml` manifest uses the Tailscale Kubernetes Operator
+to expose the app exclusively to devices on your tailnet. It is **not** a
+Funnel setup — there is no public internet exposure.
+
+### 1. Create a Tailscale OAuth client
+
+In the Tailscale admin panel → **Settings → OAuth clients**, create a client
+with `Auth Keys (write)` and `Devices (write)` scopes. Save the client ID and secret.
+
+### 2. Install the Tailscale Kubernetes Operator
+
+```bash
+helm repo add tailscale https://pkgs.tailscale.com/helmcharts
+helm repo update
+
+helm upgrade \
+  --install tailscale-operator \
+  tailscale/tailscale-operator \
+  --namespace tailscale \
+  --create-namespace \
+  --set-string oauth.clientId=<CLIENT_ID> \
+  --set-string oauth.clientSecret=<CLIENT_SECRET> \
+  --wait
+```
+
+### 3. Apply the Tailscale ingress
+
+```bash
+kubectl apply -f kubes/ingress-tailscale.yaml
+```
+
+After a minute or two the operator will register a new machine on your tailnet.
+You can watch it appear:
+
+```bash
+kubectl get ingress -n teller-home
+# NAME                     CLASS       HOSTS          ADDRESS
+# teller-home-tailscale    tailscale   teller-home    100.x.x.x
+```
+
+The app will be available at:
+
+```
+https://teller-home.<tailnet-name>.ts.net
+```
+
+Tailscale provisions the HTTPS certificate automatically — no cert-manager needed.
+
+### Funnel vs tailnet-only
+
+| Mode | What it does | How to enable |
+|---|---|---|
+| Tailnet only (default) | Reachable only by devices on your tailnet | Just apply `ingress-tailscale.yaml` as-is |
+| Funnel (public) | Reachable from the open internet via Tailscale | Add annotation `tailscale.com/funnel: "true"` — **not recommended** for this app |
+
+---
+
 ## Updating the app
 
 ```bash
