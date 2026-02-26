@@ -400,14 +400,21 @@
                 });
                 
                 const result = await response.json();
-                
-                if (response.ok) {
+
+                if (response.ok && result.status !== 'partial_success') {
+                    const accountCount = result.synced?.accounts ?? 0;
                     showStatus(
-                        `✅ Success! Connected and synced ${result.synced?.accounts_count || 0} accounts.`,
+                        `✅ Connected! Synced ${accountCount} account${accountCount !== 1 ? 's' : ''}.`,
                         'success'
                     );
-                    
-                    // Refresh enrollments list
+                    setTimeout(() => loadEnrollments(), 1000);
+                } else if (result.status === 'partial_success') {
+                    // Enrollment saved but sync failed — surface the real error
+                    showStatus(
+                        `⚠️ Enrollment saved, but sync failed: ${result.error || 'unknown error'}. ` +
+                        `Check that your certificate files are present and try clicking "Sync Now" on the dashboard.`,
+                        'error'
+                    );
                     setTimeout(() => loadEnrollments(), 1000);
                 } else {
                     showStatus(`❌ Error: ${result.error || 'Failed to save enrollment'}`, 'error');
