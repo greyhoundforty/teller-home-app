@@ -594,12 +594,11 @@
     <div class="container">
         <header>
             <div class="header-left">
-                <h1>💰 Dashboard</h1>
+                <h1 id="pageTitle">💰 Dashboard</h1>
                 <p id="lastSync">Last synced: Never</p>
             </div>
             <div class="header-actions">
-                <a href="/" class="nav-btn">🏠 Home</a>
-                <a href="/static/dashboard.html" class="nav-btn active">📊 Dashboard</a>
+                <a href="/" class="nav-btn">← Home</a>
                 <a href="/static/calendar.html" class="nav-btn">📅 Calendar</a>
                 <a href="/static/transactions.html" class="nav-btn">💳 Transactions</a>
                 <a href="/static/teller-connect.html" class="nav-btn">🔗 Connect Bank</a>
@@ -645,7 +644,7 @@
 
         <div id="editNameModal" class="edit-name-modal">
             <div class="edit-name-modal-content">
-                <h3>Edit Account Name</h3>
+                <h3>Edit Account</h3>
                 <div class="edit-name-form">
                     <div>
                         <label style="color: #94a3b8; font-size: 12px;">Original Name:</label>
@@ -653,18 +652,27 @@
                     </div>
                     <div>
                         <label for="displayNameInput" style="color: #94a3b8; font-size: 12px;">Display Name:</label>
-                        <input 
-                            id="displayNameInput" 
-                            class="edit-name-input" 
-                            type="text" 
+                        <input
+                            id="displayNameInput"
+                            class="edit-name-input"
+                            type="text"
                             placeholder="e.g. My Checking, Wife's Chase"
                             maxlength="50"
                         />
                         <div class="edit-name-hint">Leave blank to use original name</div>
                     </div>
+                    <div>
+                        <label for="budgetSelect" style="color: #94a3b8; font-size: 12px;">Budget:</label>
+                        <select id="budgetSelect" class="edit-name-input" style="cursor: pointer;">
+                            <option value="">— Unassigned —</option>
+                            <option value="dad">Dad</option>
+                            <option value="mom">Mom</option>
+                            <option value="house">House</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="edit-name-buttons">
-                    <button class="save-btn" onclick="saveDisplayName()">Save</button>
+                    <button class="save-btn" onclick="saveAccountEdits()">Save</button>
                     <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
                 </div>
             </div>
@@ -675,6 +683,20 @@
         const API_BASE = window.location.origin;
         let currentViewMode = 'card'; // 'card' or 'list'
         let currentEditingAccountId = null;
+        let currentEditingBudgetId = null;
+
+        // Determine active budget persona from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const activeBudget = urlParams.get('budget'); // 'dad', 'mom', 'house', or null
+
+        // Set page title based on budget
+        const budgetTitles = {
+            dad: "👨 Dad's Budget",
+            mom: "👩 Mom's Budget",
+            house: "🏠 House Budget"
+        };
+        document.getElementById('pageTitle').textContent =
+            activeBudget ? (budgetTitles[activeBudget] || '💰 Dashboard') : '💰 All Accounts';
 
         // Format currency
         function formatCurrency(amount) {
@@ -729,29 +751,33 @@
             return account.display_name || account.name;
         }
 
-        // Open edit name modal
-        function openEditModal(accountId, accountName, currentDisplayName) {
+        // Open edit modal
+        function openEditModal(accountId, accountName, currentDisplayName, currentBudgetId) {
             currentEditingAccountId = accountId;
+            currentEditingBudgetId = currentBudgetId || null;
             document.getElementById('originalName').textContent = accountName;
             document.getElementById('displayNameInput').value = currentDisplayName || '';
+            document.getElementById('budgetSelect').value = currentBudgetId || '';
             document.getElementById('editNameModal').classList.add('open');
             document.getElementById('displayNameInput').focus();
         }
 
-        // Close edit name modal
+        // Close edit modal
         function closeEditModal() {
             document.getElementById('editNameModal').classList.remove('open');
             currentEditingAccountId = null;
+            currentEditingBudgetId = null;
         }
 
-        // Save display name
-        async function saveDisplayName() {
+        // Save display name and budget
+        async function saveAccountEdits() {
             const displayName = document.getElementById('displayNameInput').value.trim();
-            
+            const newBudgetId = document.getElementById('budgetSelect').value || null;
+
             if (!currentEditingAccountId) return;
 
             try {
-                const response = await fetch(
+                const nameRes = await fetch(
                     `${API_BASE}/api/accounts/${currentEditingAccountId}/display-name`,
                     {
                         method: 'PUT',
@@ -760,14 +786,32 @@
                     }
                 );
 
-                if (response.ok) {
-                    showStatus('✅ Account name updated!', 'success');
-                    closeEditModal();
-                    loadAccounts(); // Reload to show updated names
-                } else {
-                    const error = await response.json();
-                    showStatus(`Error: ${error.error || 'Failed to update name'}`, 'error');
+                if (!nameRes.ok) {
+                    const err = await nameRes.json();
+                    showStatus(`Error: ${err.error || 'Failed to update name'}`, 'error');
+                    return;
                 }
+
+                // Only call budget endpoint if the value changed
+                if (newBudgetId !== currentEditingBudgetId) {
+                    const budgetRes = await fetch(
+                        `${API_BASE}/api/accounts/${currentEditingAccountId}/budget`,
+                        {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ budget_id: newBudgetId })
+                        }
+                    );
+                    if (!budgetRes.ok) {
+                        const err = await budgetRes.json();
+                        showStatus(`Error: ${err.error || 'Failed to update budget'}`, 'error');
+                        return;
+                    }
+                }
+
+                showStatus('✅ Account updated!', 'success');
+                closeEditModal();
+                loadAccounts();
             } catch (error) {
                 showStatus(`Error: ${error.message}`, 'error');
             }
@@ -776,7 +820,10 @@
         // Load accounts and balances
         async function loadAccounts() {
             try {
-                const response = await fetch(`${API_BASE}/api/accounts`);
+                const url = activeBudget
+                    ? `${API_BASE}/api/accounts?budget=${activeBudget}`
+                    : `${API_BASE}/api/accounts`;
+                const response = await fetch(url);
                 const data = await response.json();
 
                 if (!data.accounts || data.accounts.length === 0) {
@@ -855,8 +902,8 @@
                             <button class="account-action-btn" onclick="viewTransactions('${account.id}', '${displayName}')">
                                 Transactions
                             </button>
-                            <button class="account-action-btn edit-name-btn" onclick="openEditModal('${account.id}', '${account.name.replace(/'/g, "\\'")}', '${(account.display_name || '').replace(/'/g, "\\'")}')">
-                                ✏️ Rename
+                            <button class="account-action-btn edit-name-btn" onclick="openEditModal('${account.id}', '${account.name.replace(/'/g, "\\'")}', '${(account.display_name || '').replace(/'/g, "\\'")}', '${account.budget_id || ''}')">
+                                ✏️ Edit
                             </button>
                         </div>
                         ` : `
@@ -868,8 +915,8 @@
                         </div>
 
                         <div class="account-actions">
-                            <button class="account-action-btn edit-name-btn" onclick="openEditModal('${account.id}', '${account.name.replace(/'/g, "\\'")}', '${(account.display_name || '').replace(/'/g, "\\'")}')">
-                                ✏️ Rename
+                            <button class="account-action-btn edit-name-btn" onclick="openEditModal('${account.id}', '${account.name.replace(/'/g, "\\'")}', '${(account.display_name || '').replace(/'/g, "\\'")}', '${account.budget_id || ''}')">
+                                ✏️ Edit
                             </button>
                             <button class="account-action-btn" onclick="copyToClipboard('${account.id}')">
                                 Copy ID
@@ -983,7 +1030,7 @@
         // Allow Enter key to save in modal
         document.getElementById('displayNameInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                saveDisplayName();
+                saveAccountEdits();
             } else if (e.key === 'Escape') {
                 closeEditModal();
             }
