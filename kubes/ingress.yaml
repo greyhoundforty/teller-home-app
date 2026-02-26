@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: teller-home-app
+  namespace: teller-home
+  annotations:
+    # k3s ships Traefik as its default ingress controller.
+    # Remove this annotation if you are using a different controller.
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+    # Replace with whatever hostname you use on your home network,
+    # or point a local DNS entry (e.g. via AdGuard/Pi-hole) at your k3s node IP.
+    - host: teller.home
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: teller-home-app
+                port:
+                  number: 5001
