@@ -27,27 +27,29 @@ class TellerClient:
         if not self.app_token:
             raise ValueError("TELLER_APP_TOKEN must be set in environment or passed to constructor")
         
-        # Set up certificate paths
+        # Set up certificate paths — env vars take precedence, then constructor args, then defaults
+        default_root = os.path.dirname(os.path.dirname(__file__))
         if cert_path is None:
-            cert_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "authentication", "certificate.pem")
+            cert_path = os.getenv("TELLER_CERT_PATH") or os.path.join(default_root, "authentication", "certificate.pem")
         if key_path is None:
-            key_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "authentication", "private_key.pem")
-        
+            key_path = os.getenv("TELLER_KEY_PATH") or os.path.join(default_root, "authentication", "private_key.pem")
+
         self.session = requests.Session()
-        # Teller uses Basic Auth with API token as username and empty password
+        # Teller uses Basic Auth with access token as username, empty password
         self.session.auth = (self.app_token, "")
         self.session.headers.update({
             "Content-Type": "application/json",
             "Accept": "application/json",
             "User-Agent": "TellerHomeApp/1.0"
         })
-        
-        # Add certificate authentication if files exist
+
+        # Add mTLS certificate if available (required for development + production environments)
         if os.path.exists(cert_path) and os.path.exists(key_path):
             self.session.cert = (cert_path, key_path)
             print(f"Using certificate authentication from {cert_path}")
         else:
-            print(f"Warning: Certificate files not found at {cert_path} and {key_path}")
+            print(f"Warning: Certificate files not found at {cert_path} and {key_path}. "
+                  f"Set TELLER_CERT_PATH / TELLER_KEY_PATH env vars or place certs in authentication/")
     
     def _get(self, endpoint: str, params: Optional[Dict] = None) -> Dict:
         """
