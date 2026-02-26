@@ -90,6 +90,7 @@ class ScheduledPayment(Base):
     email = Column(String, nullable=True)  # Email associated with subscription/service
     category = Column(String)
     notes = Column(String)
+    budget_id = Column(String(20), nullable=True)  # 'dad', 'mom', 'house', or None (all budgets)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
