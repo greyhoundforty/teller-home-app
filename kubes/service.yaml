@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: teller-home-app
+  namespace: teller-home
+spec:
+  selector:
+    app: teller-home-app
+  ports:
+    - port: 5001
+      targetPort: 5001

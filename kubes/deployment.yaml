@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teller-home-app
+  namespace: teller-home
+  labels:
+    app: teller-home-app
+spec:
+  # Keep at 1 — SQLite does not support concurrent writers across pods
+  replicas: 1
+  selector:
+    matchLabels:
+      app: teller-home-app
+  template:
+    metadata:
+      labels:
+        app: teller-home-app
+    spec:
+      containers:
+        - name: app
+          # Update this tag to match whatever you push to your registry
+          image: ghcr.io/greyhoundforty/teller-home-app:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5001
+          env:
+            - name: DATABASE_URL
+              value: sqlite:////app/data/teller_home.db
+            - name: FLASK_ENV
+              value: production
+            - name: PYTHONUNBUFFERED
+              value: "1"
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: teller-home-secrets
+                  key: SECRET_KEY
+          volumeMounts:
+            # Persistent SQLite database
+            - name: data
+              mountPath: /app/data
+            # Teller mTLS certificates
+            - name: teller-certs
+              mountPath: /app/authentication
+              readOnly: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 5001
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 5001
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: teller-home-data
+        - name: teller-certs
+          secret:
+            secretName: teller-certs
