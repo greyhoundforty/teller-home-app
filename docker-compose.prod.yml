@@ -1,0 +1,33 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: final
+    image: teller-home-app:latest
+    container_name: teller-home-app
+    restart: unless-stopped
+    environment:
+      # SQLite DB is written to /app/data inside the container,
+      # which is bind-mounted to ./data on the Proxmox host.
+      DATABASE_URL: sqlite:////app/data/teller_home.db
+      SECRET_KEY: ${SECRET_KEY}
+      FLASK_ENV: production
+      PYTHONUNBUFFERED: "1"
+    ports:
+      - "5001:5001"
+    volumes:
+      # Persistent SQLite database
+      - ./data:/app/data
+      # Teller mTLS certificates — keep these on the host, never bake into image
+      - ./authentication:/app/authentication:ro
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:5001/api/health', timeout=5)"
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
