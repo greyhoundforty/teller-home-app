@@ -628,10 +628,20 @@ def export_transactions():
 def scheduled_payments():
     """Get all scheduled payments or create a new one."""
     session = get_session()
-    
+
     try:
         if request.method == 'GET':
-            payments = session.query(ScheduledPayment).filter_by(is_active=True).all()
+            query = session.query(ScheduledPayment).filter_by(is_active=True)
+
+            budget = request.args.get('budget')
+            if budget in ('dad', 'mom', 'house'):
+                # Return payments scoped to this budget OR unscoped (shared) payments
+                from sqlalchemy import or_
+                query = query.filter(
+                    or_(ScheduledPayment.budget_id == budget, ScheduledPayment.budget_id == None)
+                )
+
+            payments = query.all()
 
             return jsonify({
                 "payments": [{
@@ -644,13 +654,18 @@ def scheduled_payments():
                     "email": payment.email,
                     "category": payment.category,
                     "notes": payment.notes,
-                    "is_recurring": payment.is_recurring
+                    "is_recurring": payment.is_recurring,
+                    "budget_id": payment.budget_id
                 } for payment in payments],
                 "count": len(payments)
             })
 
         else:  # POST
             data = request.json
+
+            budget_id = data.get('budget_id')
+            if budget_id is not None and budget_id not in ('dad', 'mom', 'house'):
+                return jsonify({"error": "budget_id must be 'dad', 'mom', 'house', or null"}), 400
 
             payment = ScheduledPayment(
                 name=data['name'],
@@ -661,7 +676,8 @@ def scheduled_payments():
                 email=data.get('email'),
                 category=data.get('category'),
                 notes=data.get('notes'),
-                is_recurring=data.get('is_recurring', True)
+                is_recurring=data.get('is_recurring', True),
+                budget_id=budget_id
             )
 
             session.add(payment)
@@ -669,9 +685,10 @@ def scheduled_payments():
 
             return jsonify({
                 "status": "success",
-                "id": payment.id
+                "id": payment.id,
+                "budget_id": payment.budget_id
             }), 201
-    
+
     finally:
         session.close()
 

@@ -588,6 +588,311 @@
                 font-size: 24px;
             }
         }
+
+        /* ── View Tabs ─────────────────────────────────── */
+        .view-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 28px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .tab-btn {
+            padding: 10px 22px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: color 0.2s, border-color 0.2s;
+            margin-bottom: -1px;
+        }
+
+        .tab-btn:hover { color: #e2e8f0; }
+
+        .tab-btn.active {
+            color: #60a5fa;
+            border-bottom-color: #60a5fa;
+        }
+
+        .hidden { display: none !important; }
+
+        /* ── Calendar Layout ───────────────────────────── */
+        .cal-layout {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        @media (max-width: 1024px) {
+            .cal-layout { grid-template-columns: 1fr; }
+        }
+
+        .cal-wrapper {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #475569;
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .cal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .cal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #f1f5f9;
+        }
+
+        .cal-nav {
+            display: flex;
+            gap: 6px;
+        }
+
+        .cal-nav button {
+            padding: 6px 14px;
+            border: 1px solid #475569;
+            background: rgba(71, 85, 105, 0.3);
+            color: #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .cal-nav button:hover { background: rgba(71, 85, 105, 0.6); }
+
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+
+        .cal-day-header {
+            text-align: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 6px 0 10px;
+        }
+
+        .cal-day {
+            min-height: 88px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 6px 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            transition: border-color 0.15s;
+        }
+
+        .cal-day:hover { border-color: #334155; }
+
+        .cal-day.empty {
+            background: transparent;
+            border-color: transparent;
+            min-height: 0;
+        }
+
+        .cal-day.today {
+            border: 2px solid #60a5fa;
+            background: rgba(96, 165, 250, 0.07);
+        }
+
+        .cal-day-number {
+            font-size: 12px;
+            font-weight: 700;
+            color: #94a3b8;
+        }
+
+        .cal-day.today .cal-day-number { color: #60a5fa; }
+
+        .cal-day-balance {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 4px;
+            border-radius: 4px;
+            text-align: center;
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .cal-day-balance.negative {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border-color: rgba(239, 68, 68, 0.2);
+        }
+
+        .cal-day-balance.low {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+            border-color: rgba(251, 191, 36, 0.2);
+        }
+
+        .cal-day-payments {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            overflow: hidden;
+        }
+
+        .cal-payment-badge {
+            font-size: 10px;
+            padding: 1px 4px;
+            border-radius: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            background: rgba(99, 102, 241, 0.25);
+            color: #a5b4fc;
+        }
+
+        /* ── Calendar Sidebar ──────────────────────────── */
+        .cal-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .cal-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #475569;
+            border-radius: 14px;
+            padding: 18px;
+        }
+
+        .cal-card-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cal-card-title::before {
+            content: '';
+            width: 3px;
+            height: 16px;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .cal-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 7px 0;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .cal-stat:last-child { border-bottom: none; }
+
+        .cal-stat-label { font-size: 12px; color: #64748b; }
+
+        .cal-stat-value { font-size: 13px; font-weight: 700; color: #f1f5f9; }
+
+        .cal-form-group { margin-bottom: 11px; }
+
+        .cal-form-group label {
+            display: block;
+            font-size: 11px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .cal-form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .cal-add-btn {
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: opacity 0.2s;
+            margin-top: 4px;
+        }
+
+        .cal-add-btn:hover { opacity: 0.85; }
+
+        .cal-payment-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 0;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .cal-payment-item:last-child { border-bottom: none; }
+
+        .cal-payment-info { flex: 1; min-width: 0; }
+
+        .cal-payment-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #f1f5f9;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .cal-payment-meta { font-size: 11px; color: #475569; margin-top: 1px; }
+
+        .cal-payment-amount {
+            font-size: 12px;
+            font-weight: 700;
+            color: #f1f5f9;
+            flex-shrink: 0;
+        }
+
+        .cal-payment-delete {
+            width: 20px;
+            height: 20px;
+            border: none;
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            line-height: 1;
+            flex-shrink: 0;
+            transition: background 0.2s;
+        }
+
+        .cal-payment-delete:hover { background: rgba(239, 68, 68, 0.35); }
+
+        .cal-empty {
+            text-align: center;
+            padding: 16px;
+            color: #475569;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -629,16 +934,115 @@
             </div>
         </div>
 
-        <div class="section-title">Your Accounts</div>
-
-        <div class="view-toggle">
-            <button id="cardViewBtn" class="active" title="Card view">📇 Cards</button>
-            <button id="listViewBtn" title="List view">📋 List</button>
+        <!-- Tab bar -->
+        <div class="view-tabs">
+            <button id="tabAccounts" class="tab-btn active" onclick="switchTab('accounts')">📊 Accounts</button>
+            <button id="tabCalendar" class="tab-btn" onclick="switchTab('calendar')">📅 Calendar</button>
         </div>
 
-        <div id="accountsContainer" class="accounts-grid">
-            <div class="loading">
-                <div class="loading-spinner"></div>
+        <!-- Accounts View -->
+        <div id="accountsView">
+            <div class="section-title">Your Accounts</div>
+
+            <div class="view-toggle">
+                <button id="cardViewBtn" class="active" title="Card view">📇 Cards</button>
+                <button id="listViewBtn" title="List view">📋 List</button>
+            </div>
+
+            <div id="accountsContainer" class="accounts-grid">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar View -->
+        <div id="calendarView" class="hidden">
+            <div class="cal-layout">
+                <!-- Calendar grid -->
+                <div class="cal-wrapper">
+                    <div class="cal-header">
+                        <div class="cal-title" id="calTitle">Loading…</div>
+                        <div class="cal-nav">
+                            <button onclick="calPrevMonth()">←</button>
+                            <button onclick="calToday()">Today</button>
+                            <button onclick="calNextMonth()">→</button>
+                        </div>
+                    </div>
+                    <div class="cal-grid" id="calGrid"></div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="cal-sidebar">
+                    <!-- Summary stats -->
+                    <div class="cal-card">
+                        <div class="cal-card-title">This Month</div>
+                        <div class="cal-stat">
+                            <span class="cal-stat-label">Current Balance</span>
+                            <span class="cal-stat-value" id="calCurrentBalance">—</span>
+                        </div>
+                        <div class="cal-stat">
+                            <span class="cal-stat-label">Scheduled Payments</span>
+                            <span class="cal-stat-value" id="calMonthlyPayments">—</span>
+                        </div>
+                        <div class="cal-stat">
+                            <span class="cal-stat-label">Est. End-of-Month</span>
+                            <span class="cal-stat-value" id="calEOMBalance">—</span>
+                        </div>
+                        <div class="cal-stat">
+                            <span class="cal-stat-label">Payment Count</span>
+                            <span class="cal-stat-value" id="calPaymentCount">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Add payment form -->
+                    <div class="cal-card">
+                        <div class="cal-card-title">Add Payment</div>
+                        <form id="calPaymentForm" onsubmit="addCalPayment(event)">
+                            <div class="cal-form-group">
+                                <label>Name</label>
+                                <input id="calPaymentName" class="edit-name-input" type="text" placeholder="e.g. Netflix" required>
+                            </div>
+                            <div class="cal-form-row">
+                                <div class="cal-form-group">
+                                    <label>Amount ($)</label>
+                                    <input id="calPaymentAmount" class="edit-name-input" type="number" placeholder="0.00" step="0.01" min="0.01" required>
+                                </div>
+                                <div class="cal-form-group">
+                                    <label>Day of Month</label>
+                                    <input id="calPaymentDay" class="edit-name-input" type="number" placeholder="1–31" min="1" max="31" required>
+                                </div>
+                            </div>
+                            <div class="cal-form-group">
+                                <label>Category</label>
+                                <select id="calPaymentCategory" class="edit-name-input" style="cursor:pointer;">
+                                    <option value="">None</option>
+                                    <option value="Entertainment">Entertainment</option>
+                                    <option value="Utilities">Utilities</option>
+                                    <option value="Food">Food</option>
+                                    <option value="Transportation">Transportation</option>
+                                    <option value="Healthcare">Healthcare</option>
+                                    <option value="Subscriptions">Subscriptions</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="cal-form-group">
+                                <label>Type</label>
+                                <select id="calPaymentRecurring" class="edit-name-input" style="cursor:pointer;">
+                                    <option value="true">Recurring (Monthly)</option>
+                                    <option value="false">One-Time</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="cal-add-btn">Add Payment</button>
+                        </form>
+                    </div>
+
+                    <!-- Payments list -->
+                    <div class="cal-card">
+                        <div class="cal-card-title">Scheduled Payments</div>
+                        <div id="calPaymentsList"><div class="cal-empty">No payments yet</div></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1041,6 +1445,298 @@
 
         // Refresh accounts every 5 minutes
         setInterval(loadAccounts, 5 * 60 * 1000);
+
+        // ── Tab switching ────────────────────────────────────────
+        function switchTab(tab) {
+            const accountsView = document.getElementById('accountsView');
+            const calendarView = document.getElementById('calendarView');
+            const tabAccounts  = document.getElementById('tabAccounts');
+            const tabCalendar  = document.getElementById('tabCalendar');
+
+            if (tab === 'accounts') {
+                accountsView.classList.remove('hidden');
+                calendarView.classList.add('hidden');
+                tabAccounts.classList.add('active');
+                tabCalendar.classList.remove('active');
+            } else {
+                accountsView.classList.add('hidden');
+                calendarView.classList.remove('hidden');
+                tabAccounts.classList.remove('active');
+                tabCalendar.classList.add('active');
+                loadCalendarData();
+            }
+        }
+
+        // ── Calendar state ───────────────────────────────────────
+        let calDate     = new Date();
+        let calPayments = [];
+        let calBalance  = 0;
+
+        const MONTH_NAMES = ['January','February','March','April','May','June',
+                             'July','August','September','October','November','December'];
+
+        // Fetch budget-scoped accounts + payments, then render
+        async function loadCalendarData() {
+            try {
+                const acctUrl = activeBudget
+                    ? `${API_BASE}/api/accounts?budget=${activeBudget}`
+                    : `${API_BASE}/api/accounts`;
+                const payUrl = activeBudget
+                    ? `${API_BASE}/api/scheduled-payments?budget=${activeBudget}`
+                    : `${API_BASE}/api/scheduled-payments`;
+
+                const [acctRes, payRes] = await Promise.all([fetch(acctUrl), fetch(payUrl)]);
+                const acctData = await acctRes.json();
+                const payData  = await payRes.json();
+
+                const accts = acctData.accounts || [];
+                calPayments = payData.payments   || [];
+
+                // Net balance for this budget (assets minus liabilities)
+                calBalance = accts.reduce((total, a) => {
+                    const bal = a.current_balance || 0;
+                    return (a.type === 'credit' || a.type === 'credit_card' || a.subtype === 'credit_card')
+                        ? total - Math.abs(bal)
+                        : total + bal;
+                }, 0);
+
+                renderCalendar();
+                updateCalSummary();
+                renderCalPaymentsList();
+            } catch (err) {
+                console.error('Calendar load error:', err);
+                showStatus('Error loading calendar data', 'error');
+            }
+        }
+
+        // Project daily balances for a given year/month
+        function calculateProjectedBalances(year, month) {
+            const today      = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayYear  = today.getFullYear();
+            const todayMonth = today.getMonth();
+            const todayDay   = today.getDate();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const result = {};
+
+            // Helper: sum of all recurring payments (used to skip full months)
+            const recurringTotal = calPayments
+                .filter(p => p.is_recurring !== false)
+                .reduce((s, p) => s + p.amount, 0);
+
+            // Past month — show actual balance, no projection
+            if (year < todayYear || (year === todayYear && month < todayMonth)) {
+                for (let d = 1; d <= daysInMonth; d++) result[d] = calBalance;
+                return result;
+            }
+
+            if (year === todayYear && month === todayMonth) {
+                // Current month: project forward from today
+                let running = calBalance;
+                for (let d = 1; d <= daysInMonth; d++) {
+                    if (d <= todayDay) {
+                        result[d] = calBalance;
+                    } else {
+                        running -= calPayments
+                            .filter(p => p.day_of_month === d)
+                            .reduce((s, p) => s + p.amount, 0);
+                        result[d] = running;
+                    }
+                }
+            } else {
+                // Future month: carry forward from end of current month
+                let running = calBalance;
+
+                // Deduct remaining days of current month
+                const curMonthDays = new Date(todayYear, todayMonth + 1, 0).getDate();
+                for (let d = todayDay + 1; d <= curMonthDays; d++) {
+                    running -= calPayments
+                        .filter(p => p.day_of_month === d)
+                        .reduce((s, p) => s + p.amount, 0);
+                }
+
+                // Deduct full intervening months
+                let y = todayYear, m = todayMonth + 1;
+                while (y < year || (y === year && m < month)) {
+                    if (m > 11) { m = 0; y++; }
+                    running -= recurringTotal;
+                    m++;
+                }
+
+                // Project the target month day by day
+                for (let d = 1; d <= daysInMonth; d++) {
+                    running -= calPayments
+                        .filter(p => p.day_of_month === d)
+                        .reduce((s, p) => s + p.amount, 0);
+                    result[d] = running;
+                }
+            }
+
+            return result;
+        }
+
+        function renderCalendar() {
+            const year  = calDate.getFullYear();
+            const month = calDate.getMonth();
+            const today = new Date();
+
+            document.getElementById('calTitle').textContent = `${MONTH_NAMES[month]} ${year}`;
+
+            const firstDayOfWeek = new Date(year, month, 1).getDay();
+            const daysInMonth    = new Date(year, month + 1, 0).getDate();
+            const projected      = calculateProjectedBalances(year, month);
+
+            const grid = document.getElementById('calGrid');
+            grid.innerHTML = '';
+
+            // Day-name headers
+            ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(name => {
+                const h = document.createElement('div');
+                h.className = 'cal-day-header';
+                h.textContent = name;
+                grid.appendChild(h);
+            });
+
+            // Empty cells before the 1st
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'cal-day empty';
+                grid.appendChild(empty);
+            }
+
+            // Day cells
+            for (let d = 1; d <= daysInMonth; d++) {
+                const isToday = year === today.getFullYear() &&
+                                month === today.getMonth() &&
+                                d === today.getDate();
+
+                const cell = document.createElement('div');
+                cell.className = 'cal-day' + (isToday ? ' today' : '');
+
+                // Day number
+                const numEl = document.createElement('div');
+                numEl.className = 'cal-day-number';
+                numEl.textContent = d;
+                cell.appendChild(numEl);
+
+                // Projected balance badge
+                if (projected[d] !== undefined) {
+                    const bal = projected[d];
+                    const cls = bal < 0 ? 'negative' : bal < 500 ? 'low' : '';
+                    const balEl = document.createElement('div');
+                    balEl.className = 'cal-day-balance' + (cls ? ' ' + cls : '');
+                    balEl.textContent = formatCurrency(bal);
+                    cell.appendChild(balEl);
+                }
+
+                // Payment badges
+                const dayPmts = calPayments.filter(p => p.day_of_month === d);
+                if (dayPmts.length > 0) {
+                    const wrap = document.createElement('div');
+                    wrap.className = 'cal-day-payments';
+                    dayPmts.forEach(p => {
+                        const badge = document.createElement('div');
+                        badge.className = 'cal-payment-badge';
+                        badge.textContent = `${p.name} ${formatCurrency(p.amount)}`;
+                        badge.title = `${p.name}: ${formatCurrency(p.amount)}${p.category ? ' · ' + p.category : ''}`;
+                        wrap.appendChild(badge);
+                    });
+                    cell.appendChild(wrap);
+                }
+
+                grid.appendChild(cell);
+            }
+        }
+
+        function updateCalSummary() {
+            const total      = calPayments.reduce((s, p) => s + p.amount, 0);
+            const eomBalance = calBalance - total;
+
+            document.getElementById('calCurrentBalance').textContent  = formatCurrency(calBalance);
+            document.getElementById('calMonthlyPayments').textContent = formatCurrency(total);
+            document.getElementById('calEOMBalance').textContent       = formatCurrency(eomBalance);
+            document.getElementById('calPaymentCount').textContent     = calPayments.length;
+        }
+
+        function renderCalPaymentsList() {
+            const container = document.getElementById('calPaymentsList');
+            if (calPayments.length === 0) {
+                container.innerHTML = '<div class="cal-empty">No scheduled payments for this budget</div>';
+                return;
+            }
+
+            const sorted = [...calPayments].sort((a, b) => a.day_of_month - b.day_of_month);
+            container.innerHTML = sorted.map(p => `
+                <div class="cal-payment-item">
+                    <div class="cal-payment-info">
+                        <div class="cal-payment-name">${p.name}</div>
+                        <div class="cal-payment-meta">Day ${p.day_of_month}${p.category ? ' · ' + p.category : ''}${p.is_recurring !== false ? ' · Monthly' : ' · One-time'}</div>
+                    </div>
+                    <div class="cal-payment-amount">${formatCurrency(p.amount)}</div>
+                    <button class="cal-payment-delete" onclick="deleteCalPayment(${p.id})" title="Delete">×</button>
+                </div>
+            `).join('');
+        }
+
+        async function addCalPayment(event) {
+            event.preventDefault();
+            const name       = document.getElementById('calPaymentName').value.trim();
+            const amount     = parseFloat(document.getElementById('calPaymentAmount').value);
+            const day        = parseInt(document.getElementById('calPaymentDay').value);
+            const category   = document.getElementById('calPaymentCategory').value;
+            const isRecurring = document.getElementById('calPaymentRecurring').value === 'true';
+
+            if (!name || isNaN(amount) || isNaN(day) || day < 1 || day > 31) {
+                showStatus('Please fill in all payment fields correctly.', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/scheduled-payments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name, amount, day_of_month: day,
+                        category: category || null,
+                        is_recurring: isRecurring,
+                        budget_id: activeBudget || null
+                    })
+                });
+
+                if (res.ok) {
+                    showStatus('✅ Payment added!', 'success');
+                    document.getElementById('calPaymentForm').reset();
+                    await loadCalendarData();
+                } else {
+                    const err = await res.json();
+                    showStatus(`Error: ${err.error || 'Failed to add payment'}`, 'error');
+                }
+            } catch (err) {
+                showStatus(`Error: ${err.message}`, 'error');
+            }
+        }
+
+        async function deleteCalPayment(paymentId) {
+            if (!confirm('Delete this scheduled payment?')) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/scheduled-payments/${paymentId}`, {
+                    method: 'DELETE'
+                });
+                if (res.ok) {
+                    showStatus('✅ Payment deleted.', 'success');
+                    await loadCalendarData();
+                } else {
+                    showStatus('Error deleting payment', 'error');
+                }
+            } catch (err) {
+                showStatus(`Error: ${err.message}`, 'error');
+            }
+        }
+
+        // Calendar navigation
+        function calPrevMonth() { calDate.setMonth(calDate.getMonth() - 1); renderCalendar(); }
+        function calNextMonth() { calDate.setMonth(calDate.getMonth() + 1); renderCalendar(); }
+        function calToday()     { calDate = new Date(); renderCalendar(); }
     </script>
 </body>
 </html>
