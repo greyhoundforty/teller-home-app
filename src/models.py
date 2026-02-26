@@ -25,6 +25,7 @@ class Account(Base):
     institution_name = Column(String)
     currency = Column(String, default="USD")
     status = Column(String, default="open")
+    budget_id = Column(String(20), nullable=True)  # 'dad', 'mom', 'house', or None (unassigned)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

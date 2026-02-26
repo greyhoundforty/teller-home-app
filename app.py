@@ -147,22 +147,30 @@ def sync_data():
 
 @app.route('/api/accounts')
 def get_accounts():
-    """Get all accounts."""
+    """Get all accounts, optionally filtered by budget persona."""
     session = get_session()
-    
+
     try:
-        accounts = session.query(Account).all()
-        
+        budget = request.args.get('budget')
+        query = session.query(Account)
+
+        if budget == 'unassigned':
+            query = query.filter(Account.budget_id == None)
+        elif budget in ('dad', 'mom', 'house'):
+            query = query.filter(Account.budget_id == budget)
+
+        accounts = query.all()
+
         accounts_data = []
         for account in accounts:
             # Get latest balance
             latest_balance = session.query(Balance).filter_by(
                 account_id=account.id
             ).order_by(desc(Balance.timestamp)).first()
-            
+
             # Use ledger balance or available balance
             current_balance = latest_balance.ledger if latest_balance else 0
-            
+
             accounts_data.append({
                 "id": account.id,
                 "name": account.name,
@@ -173,6 +181,7 @@ def get_accounts():
                 "institution": account.institution_name,
                 "currency": account.currency,
                 "status": account.status,
+                "budget_id": account.budget_id,
                 "current_balance": current_balance,
                 "balance": {
                     "available": latest_balance.available if latest_balance else None,
@@ -180,9 +189,81 @@ def get_accounts():
                     "timestamp": latest_balance.timestamp.isoformat() if latest_balance else None
                 }
             })
-        
+
         return jsonify({"accounts": accounts_data})
-    
+
+    finally:
+        session.close()
+
+
+@app.route('/api/accounts/<account_id>/budget', methods=['PUT'])
+def update_account_budget(account_id):
+    """Assign an account to a budget persona."""
+    session = get_session()
+
+    try:
+        account = session.query(Account).filter_by(id=account_id).first()
+
+        if not account:
+            return jsonify({"error": "Account not found"}), 404
+
+        data = request.get_json()
+        budget_id = data.get('budget_id')
+
+        if budget_id is not None and budget_id not in ('dad', 'mom', 'house'):
+            return jsonify({"error": "budget_id must be 'dad', 'mom', 'house', or null"}), 400
+
+        account.budget_id = budget_id
+        account.updated_at = datetime.utcnow()
+        session.commit()
+
+        return jsonify({
+            "status": "success",
+            "account_id": account_id,
+            "budget_id": account.budget_id
+        })
+
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        session.close()
+
+
+@app.route('/api/budgets/summary')
+def budgets_summary():
+    """Return aggregate stats for each budget persona."""
+    session = get_session()
+
+    try:
+        result = {}
+
+        for persona in ('dad', 'mom', 'house'):
+            accounts = session.query(Account).filter(Account.budget_id == persona).all()
+            assets = 0.0
+            liabilities = 0.0
+            for account in accounts:
+                latest_balance = session.query(Balance).filter_by(
+                    account_id=account.id
+                ).order_by(desc(Balance.timestamp)).first()
+                balance = latest_balance.ledger if latest_balance else 0.0
+                if account.type in ('credit_card', 'credit'):
+                    liabilities += abs(balance)
+                else:
+                    assets += balance
+            result[persona] = {
+                "net_worth": round(assets - liabilities, 2),
+                "assets": round(assets, 2),
+                "liabilities": round(liabilities, 2),
+                "account_count": len(accounts)
+            }
+
+        unassigned_count = session.query(Account).filter(Account.budget_id == None).count()
+        result['unassigned'] = {"account_count": unassigned_count}
+
+        return jsonify(result)
+
     finally:
         session.close()
 
@@ -279,8 +360,9 @@ def get_transactions(account_id):
             "type": txn.type,
             "status": txn.status
         } for txn in transactions])
-    
+
     finally:
+        session.close()
 
 
 @app.route('/api/transactions')
