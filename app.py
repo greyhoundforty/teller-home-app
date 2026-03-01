@@ -122,10 +122,19 @@ def sync_data():
                 "message": "No active enrollments found. Please connect a bank account first."
             }), 400
 
+        SYNC_COOLDOWN_SECONDS = 120
+        now = datetime.utcnow()
+
         totals = {"accounts": 0, "balances": 0, "transactions": 0}
         synced_enrollments = []
+        skipped_enrollments = []
 
         for enrollment in enrollments:
+            if enrollment.last_synced and (now - enrollment.last_synced).total_seconds() < SYNC_COOLDOWN_SECONDS:
+                remaining = int(SYNC_COOLDOWN_SECONDS - (now - enrollment.last_synced).total_seconds())
+                logger.info(f"Skipping enrollment {enrollment.enrollment_id} — synced {int((now - enrollment.last_synced).total_seconds())}s ago (cooldown {remaining}s remaining)")
+                skipped_enrollments.append(enrollment.enrollment_id)
+                continue
             try:
                 client = TellerClient(app_token=enrollment.access_token)
                 sync_service = SyncService(client, session)
@@ -143,6 +152,7 @@ def sync_data():
             "status": "success",
             "synced": totals,
             "enrollments": synced_enrollments,
+            "skipped": skipped_enrollments,
             "timestamp": datetime.utcnow().isoformat()
         })
 

@@ -2,9 +2,13 @@
 Teller API Client for connecting to Teller Connect and fetching financial data.
 """
 import os
+import time
+import logging
 import requests
 from typing import Dict, List, Optional
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -51,18 +55,33 @@ class TellerClient:
             print(f"Warning: Certificate files not found at {cert_path} and {key_path}. "
                   f"Set TELLER_CERT_PATH / TELLER_KEY_PATH env vars or place certs in authentication/")
     
-    def _get(self, endpoint: str, params: Optional[Dict] = None) -> Dict:
+    def _get(self, endpoint: str, params: Optional[Dict] = None, max_retries: int = 3) -> Dict:
         """
-        Make a GET request to the Teller API.
-        
+        Make a GET request to the Teller API with exponential backoff on 429.
+
         Args:
             endpoint: API endpoint (without base URL)
             params: Query parameters
-            
+            max_retries: Maximum number of retry attempts on rate limit
+
         Returns:
             JSON response as dictionary
         """
         url = f"{self.BASE_URL}{endpoint}"
+        for attempt in range(max_retries):
+            response = self.session.get(url, params=params)
+            if response.status_code == 429:
+                # Honour Retry-After if present, otherwise use exponential backoff
+                retry_after = int(response.headers.get("Retry-After", 2 ** (attempt + 1)))
+                logger.warning(
+                    f"Rate limited on {endpoint}, waiting {retry_after}s "
+                    f"(attempt {attempt + 1}/{max_retries})"
+                )
+                time.sleep(retry_after)
+                continue
+            response.raise_for_status()
+            return response.json()
+        # Final attempt after exhausting retries
         response = self.session.get(url, params=params)
         response.raise_for_status()
         return response.json()
