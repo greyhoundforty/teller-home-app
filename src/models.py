@@ -26,6 +26,7 @@ class Account(Base):
     currency = Column(String, default="USD")
     status = Column(String, default="open")
     budget_id = Column(String(20), nullable=True)  # 'dad', 'mom', 'house', or None (unassigned)
+    pull_transactions = Column(Boolean, default=False)  # pull last 24h of transactions for dashboard
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     

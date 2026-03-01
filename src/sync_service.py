@@ -93,7 +93,7 @@ class SyncService:
             count = 0
 
             for account in accounts:
-                time.sleep(0.5)
+                time.sleep(1.0)
                 try:
                     balance_data = self.teller_client.get_account_balances(account.id)
 
@@ -140,11 +140,11 @@ class SyncService:
             count = 0
 
             for account in accounts:
-                time.sleep(0.5)
+                time.sleep(1.0)
                 try:
                     transactions_data = self.teller_client.get_transactions(
                         account.id,
-                        count=500
+                        count=100
                     )
 
                     for txn_data in transactions_data:
