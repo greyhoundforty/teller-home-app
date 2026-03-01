@@ -193,6 +193,7 @@ def get_accounts():
                 "currency": account.currency,
                 "status": account.status,
                 "budget_id": account.budget_id,
+                "pull_transactions": account.pull_transactions or False,
                 "current_balance": current_balance,
                 "balance": {
                     "available": latest_balance.available if latest_balance else None,
@@ -308,6 +309,77 @@ def update_account_display_name(account_id):
         session.rollback()
         return jsonify({"error": str(e)}), 500
     
+    finally:
+        session.close()
+
+
+@app.route('/api/accounts/<account_id>/pull-transactions', methods=['PUT'])
+def update_account_pull_transactions(account_id):
+    """Enable or disable 24h transaction pulling for an account."""
+    session = get_session()
+
+    try:
+        account = session.query(Account).filter_by(id=account_id).first()
+
+        if not account:
+            return jsonify({"error": "Account not found"}), 404
+
+        data = request.get_json()
+        account.pull_transactions = bool(data.get('pull_transactions', False))
+        account.updated_at = datetime.utcnow()
+        session.commit()
+
+        return jsonify({
+            "status": "success",
+            "account_id": account_id,
+            "pull_transactions": account.pull_transactions
+        })
+
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        session.close()
+
+
+@app.route('/api/transactions/recent')
+def get_recent_transactions():
+    """Get transactions from the last 24h for accounts with pull_transactions enabled."""
+    session = get_session()
+
+    try:
+        since = datetime.utcnow() - timedelta(hours=24)
+
+        pull_accounts = session.query(Account).filter_by(pull_transactions=True).all()
+        pull_account_ids = [a.id for a in pull_accounts]
+
+        if not pull_account_ids:
+            return jsonify({"transactions": [], "accounts": [], "since": since.isoformat()})
+
+        transactions = session.query(Transaction).filter(
+            Transaction.account_id.in_(pull_account_ids),
+            Transaction.date >= since
+        ).order_by(desc(Transaction.date)).all()
+
+        account_map = {a.id: (a.display_name or a.name) for a in pull_accounts}
+
+        return jsonify({
+            "transactions": [{
+                "id": txn.id,
+                "account_id": txn.account_id,
+                "account_name": account_map.get(txn.account_id, "Unknown"),
+                "amount": txn.amount,
+                "date": txn.date.isoformat(),
+                "description": txn.description,
+                "category": txn.category,
+                "type": txn.type,
+                "status": txn.status
+            } for txn in transactions],
+            "accounts": [{"id": a.id, "name": account_map[a.id]} for a in pull_accounts],
+            "since": since.isoformat()
+        })
+
     finally:
         session.close()
 

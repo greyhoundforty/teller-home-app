@@ -893,6 +893,79 @@
             color: #475569;
             font-size: 12px;
         }
+
+        /* Toggle switch for pull_transactions */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 22px;
+            flex-shrink: 0;
+        }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: #334155;
+            border-radius: 22px;
+            transition: background 0.2s;
+        }
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            left: 3px;
+            top: 3px;
+            background: #94a3b8;
+            border-radius: 50%;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .toggle-switch input:checked + .toggle-slider { background: rgba(99, 102, 241, 0.4); }
+        .toggle-switch input:checked + .toggle-slider::before {
+            transform: translateX(18px);
+            background: #818cf8;
+        }
+
+        /* Recent transactions section */
+        .recent-txn-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .recent-txn-table th {
+            text-align: left;
+            padding: 8px 12px;
+            color: #64748b;
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid #334155;
+        }
+        .recent-txn-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #1e293b;
+            color: #cbd5e1;
+        }
+        .recent-txn-table tr:last-child td { border-bottom: none; }
+        .recent-txn-table tr:hover td { background: rgba(255,255,255,0.03); }
+        .txn-amount-pos { color: #34d399; }
+        .txn-amount-neg { color: #f87171; }
+        .recent-txn-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 16px;
+        }
+        .recent-txn-empty {
+            text-align: center;
+            padding: 24px;
+            color: #475569;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -952,6 +1025,14 @@
             <div id="accountsContainer" class="accounts-grid">
                 <div class="loading">
                     <div class="loading-spinner"></div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions (24h) — shown only when at least one account has pull enabled -->
+            <div id="recentTxnSection" style="display: none; margin-top: 30px;">
+                <div class="section-title">Recent Transactions <span style="font-size: 13px; font-weight: 400; color: #64748b;">(last 24 hours)</span></div>
+                <div id="recentTxnContainer" class="recent-txn-card">
+                    <div class="recent-txn-empty">Loading...</div>
                 </div>
             </div>
         </div>
@@ -1074,6 +1155,16 @@
                             <option value="house">House</option>
                         </select>
                     </div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 4px 0;">
+                        <div>
+                            <label style="color: #94a3b8; font-size: 12px; display: block;">Pull Transactions (24h):</label>
+                            <div style="color: #64748b; font-size: 11px; margin-top: 2px;">Show last 24h on dashboard</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="pullTransactionsToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
                 </div>
                 <div class="edit-name-buttons">
                     <button class="save-btn" onclick="saveAccountEdits()">Save</button>
@@ -1156,12 +1247,13 @@
         }
 
         // Open edit modal
-        function openEditModal(accountId, accountName, currentDisplayName, currentBudgetId) {
+        function openEditModal(accountId, accountName, currentDisplayName, currentBudgetId, currentPullTransactions) {
             currentEditingAccountId = accountId;
             currentEditingBudgetId = currentBudgetId || null;
             document.getElementById('originalName').textContent = accountName;
             document.getElementById('displayNameInput').value = currentDisplayName || '';
             document.getElementById('budgetSelect').value = currentBudgetId || '';
+            document.getElementById('pullTransactionsToggle').checked = !!currentPullTransactions;
             document.getElementById('editNameModal').classList.add('open');
             document.getElementById('displayNameInput').focus();
         }
@@ -1173,10 +1265,11 @@
             currentEditingBudgetId = null;
         }
 
-        // Save display name and budget
+        // Save display name, budget, and pull_transactions toggle
         async function saveAccountEdits() {
             const displayName = document.getElementById('displayNameInput').value.trim();
             const newBudgetId = document.getElementById('budgetSelect').value || null;
+            const newPullTransactions = document.getElementById('pullTransactionsToggle').checked;
 
             if (!currentEditingAccountId) return;
 
@@ -1213,9 +1306,25 @@
                     }
                 }
 
+                // Save pull_transactions toggle
+                const pullRes = await fetch(
+                    `${API_BASE}/api/accounts/${currentEditingAccountId}/pull-transactions`,
+                    {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ pull_transactions: newPullTransactions })
+                    }
+                );
+                if (!pullRes.ok) {
+                    const err = await pullRes.json();
+                    showStatus(`Error: ${err.error || 'Failed to update pull setting'}`, 'error');
+                    return;
+                }
+
                 showStatus('✅ Account updated!', 'success');
                 closeEditModal();
                 loadAccounts();
+                loadRecentTransactions();
             } catch (error) {
                 showStatus(`Error: ${error.message}`, 'error');
             }
@@ -1242,6 +1351,62 @@
             } catch (error) {
                 console.error('Error loading accounts:', error);
                 showStatus(`Error loading accounts: ${error.message}`, 'error');
+            }
+        }
+
+        // Load and render recent transactions (last 24h) for pull-enabled accounts
+        async function loadRecentTransactions() {
+            try {
+                const response = await fetch(`${API_BASE}/api/transactions/recent`);
+                const data = await response.json();
+
+                const section = document.getElementById('recentTxnSection');
+                const container = document.getElementById('recentTxnContainer');
+
+                if (!data.accounts || data.accounts.length === 0) {
+                    section.style.display = 'none';
+                    return;
+                }
+
+                section.style.display = 'block';
+
+                if (!data.transactions || data.transactions.length === 0) {
+                    container.innerHTML = '<div class="recent-txn-empty">No transactions in the last 24 hours for the enabled accounts.</div>';
+                    return;
+                }
+
+                const rows = data.transactions.map(txn => {
+                    const amt = parseFloat(txn.amount);
+                    const amtClass = amt < 0 ? 'txn-amount-neg' : 'txn-amount-pos';
+                    const date = new Date(txn.date);
+                    const dateStr = date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    return `
+                        <tr>
+                            <td>${dateStr}</td>
+                            <td>${txn.account_name}</td>
+                            <td>${txn.description}</td>
+                            <td>${txn.category || '—'}</td>
+                            <td class="${amtClass}">${formatCurrency(amt)}</td>
+                            <td><span style="color: #64748b; font-size: 11px;">${txn.status}</span></td>
+                        </tr>`;
+                }).join('');
+
+                container.innerHTML = `
+                    <table class="recent-txn-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Account</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rows}</tbody>
+                    </table>`;
+            } catch (error) {
+                console.error('Error loading recent transactions:', error);
             }
         }
 
@@ -1306,7 +1471,7 @@
                             <button class="account-action-btn" onclick="viewTransactions('${account.id}', '${displayName}')">
                                 Transactions
                             </button>
-                            <button class="account-action-btn edit-name-btn" onclick="openEditModal('${account.id}', '${account.name.replace(/'/g, "\\'")}', '${(account.display_name || '').replace(/'/g, "\\'")}', '${account.budget_id || ''}')">
+                            <button class="account-action-btn edit-name-btn" onclick="openEditModal('${account.id}', '${account.name.replace(/'/g, "\\'")}', '${(account.display_name || '').replace(/'/g, "\\'")}', '${account.budget_id || ''}', ${!!account.pull_transactions})">
                                 ✏️ Edit
                             </button>
                         </div>
@@ -1319,7 +1484,7 @@
                         </div>
 
                         <div class="account-actions">
-                            <button class="account-action-btn edit-name-btn" onclick="openEditModal('${account.id}', '${account.name.replace(/'/g, "\\'")}', '${(account.display_name || '').replace(/'/g, "\\'")}', '${account.budget_id || ''}')">
+                            <button class="account-action-btn edit-name-btn" onclick="openEditModal('${account.id}', '${account.name.replace(/'/g, "\\'")}', '${(account.display_name || '').replace(/'/g, "\\'")}', '${account.budget_id || ''}', ${!!account.pull_transactions})">
                                 ✏️ Edit
                             </button>
                             <button class="account-action-btn" onclick="copyToClipboard('${account.id}')">
@@ -1384,7 +1549,8 @@
 
                 if (response.ok) {
                     showStatus('✅ Sync complete! Data updated.', 'success');
-                    loadAccounts(); // Reload accounts after sync
+                    loadAccounts();
+                    loadRecentTransactions();
                 } else {
                     showStatus(`Error: ${result.error || 'Sync failed'}`, 'error');
                 }
@@ -1440,11 +1606,12 @@
             }
         });
 
-        // Load accounts on page load
+        // Load accounts and recent transactions on page load
         loadAccounts();
+        loadRecentTransactions();
 
-        // Refresh accounts every 5 minutes
-        setInterval(loadAccounts, 5 * 60 * 1000);
+        // Refresh accounts and recent transactions every 5 minutes
+        setInterval(() => { loadAccounts(); loadRecentTransactions(); }, 5 * 60 * 1000);
 
         // ── Tab switching ────────────────────────────────────────
         function switchTab(tab) {
